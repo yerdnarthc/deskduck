@@ -20,6 +20,15 @@ public sealed class AppSettings
     public int HoldMilliseconds { get; set; } = 400;
     public int ReleaseMilliseconds { get; set; } = 800;
 
+    /// <summary>
+    /// "Activity" = duck while a trigger session is ACTIVE (ignores loudness).
+    /// "Level" = duck while a trigger session's peak level is above ThresholdDb.
+    /// </summary>
+    public string TriggerMode { get; set; } = "Activity";
+
+    /// <summary>Peak level (dBFS) a trigger must reach to duck. -60 to 0.</summary>
+    public double ThresholdDb { get; set; } = -30;
+
     public void Normalize()
     {
         TargetProcessName = ProcessNames.Normalize(TargetProcessName);
@@ -36,5 +45,9 @@ public sealed class AppSettings
         AttackMilliseconds = Math.Clamp(AttackMilliseconds, 0, 5000);
         HoldMilliseconds = Math.Clamp(HoldMilliseconds, 0, 10000);
         ReleaseMilliseconds = Math.Clamp(ReleaseMilliseconds, 0, 10000);
+
+        if (!string.Equals(TriggerMode, "Level", StringComparison.OrdinalIgnoreCase))
+            TriggerMode = "Activity";
+        ThresholdDb = Math.Clamp(ThresholdDb, -60, 0);
     }
 }
