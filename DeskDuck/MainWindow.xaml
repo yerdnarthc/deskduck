@@ -127,7 +127,7 @@
                                  IsChecked="{Binding IsActivityMode}" Margin="0,14,0,2"
                                  ToolTip="Duck while a trigger's audio session is ACTIVE"/>
                     <RadioButton Content="Audio level (louder than…)"
-                                 IsChecked="{Binding IsLevelMode}" Margin="0,2"
+                                 IsChecked="{Binding IsLevelMode}" Margin="0,10"
                                  ToolTip="Duck while a trigger's peak level is above the threshold"/>
                     <StackPanel Visibility="{Binding IsLevelMode, Converter={StaticResource BoolToVis}}">
                         <Label Target="{Binding ElementName=ThresholdSlider}" Content="{Binding ThresholdText, StringFormat='Threshold: {0}'}"/>

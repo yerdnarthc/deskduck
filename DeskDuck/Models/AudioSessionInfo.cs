@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows.Media;
 
 namespace DeskDuck.Models;
 
@@ -44,6 +45,20 @@ public sealed class AudioSessionInfo : INotifyPropertyChanged
         {
             if (_isCausingDuck == value) return;
             _isCausingDuck = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private ImageSource? _icon;
+
+    /// <summary>Owning app's icon. Null = no icon cell.</summary>
+    public ImageSource? Icon
+    {
+        get => _icon;
+        set
+        {
+            if (_icon == value) return;
+            _icon = value;
             OnPropertyChanged();
         }
     }

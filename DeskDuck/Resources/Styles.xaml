@@ -172,8 +172,28 @@
                         <Border Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="1" CornerRadius="4"/>
+                        <!-- Editable box shows text only by nature, so the selection's
+                             icon sits beside it (collapses when typing a custom
+                             name with no matching item). -->
                         <Grid Margin="2,2,26,2">
-                            <TextBox x:Name="PART_EditableTextBox"
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <Image Width="16" Height="16" Margin="4,0,2,0"
+                                   VerticalAlignment="Center"
+                                   Source="{Binding SelectedItem.Icon, RelativeSource={RelativeSource TemplatedParent}}">
+                                <Image.Style>
+                                    <Style TargetType="Image">
+                                        <Style.Triggers>
+                                            <Trigger Property="Source" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Image.Style>
+                            </Image>
+                            <TextBox x:Name="PART_EditableTextBox" Grid.Column="1"
                                      Background="Transparent" BorderThickness="0"
                                      Foreground="{TemplateBinding Foreground}"
                                      Padding="{TemplateBinding Padding}"

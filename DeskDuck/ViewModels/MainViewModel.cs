@@ -226,6 +226,12 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         var discovered = _monitor.GetDiscoveredApps();
         foreach (var app in discovered)
             app.Icon = AppIconService.GetIcon(app.ExecutablePath);
+        var iconByApp = discovered
+            .GroupBy(a => a.ProcessName, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Icon, StringComparer.OrdinalIgnoreCase);
+        foreach (var s in snapshot)
+            if (iconByApp.TryGetValue(s.ProcessName, out var icon))
+                s.Icon = icon;
         SyncAppsInPlace(discovered);
 
         SyncTriggerOptions(discovered);
