@@ -32,7 +32,7 @@ public sealed class TrayManager : IDisposable
             Visible = true,
         };
         _tray.DoubleClick += (_, _) => _main.ShowFromTray();
-        _enabledItem = new ToolStripMenuItem("Enabled", null, (_, _) => _vm.Enabled = _enabledItem.Checked)
+        _enabledItem = new ToolStripMenuItem("Enabled", null, OnEnabledClicked)
         {
             CheckOnClick = true,
             Checked = vm.Enabled,
@@ -44,7 +44,12 @@ public sealed class TrayManager : IDisposable
 
     private ContextMenuStrip BuildMenu()
     {
-        var menu = new ContextMenuStrip();
+        var menu = new ContextMenuStrip
+        {
+            Renderer = new DarkMenuRenderer(),
+            BackColor = DarkColors.Background,
+            ForeColor = DarkColors.Text,
+        };
         menu.Items.Add(new ToolStripMenuItem("Open DeskDuck", null, (_, _) => _main.ShowFromTray()));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(_enabledItem);
@@ -55,6 +60,8 @@ public sealed class TrayManager : IDisposable
         menu.Items.Add(new ToolStripMenuItem("Help", null, (_, _) => _main.ShowHelp()));
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(new ToolStripMenuItem("Exit DeskDuck", null, (_, _) => _main.RequestRealExit()));
+        foreach (ToolStripItem item in menu.Items)
+            item.ForeColor = DarkColors.Text;
         return menu;
     }
 
@@ -66,6 +73,12 @@ public sealed class TrayManager : IDisposable
         _balloonShown = true;
         _tray.ShowBalloonTip(3000, "DeskDuck keeps running",
             "Right-click the tray icon to bring DeskDuck back or exit.", ToolTipIcon.Info);
+    }
+
+    private void OnEnabledClicked(object? sender, EventArgs e)
+    {
+        if (sender is ToolStripMenuItem item)
+            _vm.Enabled = item.Checked;
     }
 
     private void OnVmChanged(object? sender, PropertyChangedEventArgs e)
@@ -119,5 +132,42 @@ public sealed class TrayManager : IDisposable
         _tray.ContextMenuStrip?.Dispose();
         _tray.Visible = false;
         _tray.Dispose();
+    }
+
+    /// <summary>App palette as WinForms colors (mirrors Styles.xaml tokens).</summary>
+    private static class DarkColors
+    {
+        public static readonly Color Background = Color.FromArgb(0x14, 0x14, 0x13); // #141413
+        public static readonly Color Text = Color.FromArgb(0xDF, 0xDC, 0xDC);       // #dfdcdc
+        // Amber 28% over background — same role as AccentSoftBrush in-app.
+        public static readonly Color Selection = Color.FromArgb(0x54, 0x3E, 0x20);
+        // Cream 18% over background — same role as BorderBrush in-app.
+        public static readonly Color Border = Color.FromArgb(0x38, 0x33, 0x2C);
+    }
+
+    private sealed class DarkMenuRenderer : ToolStripProfessionalRenderer
+    {
+        public DarkMenuRenderer() : base(new DarkColorTable()) { }
+    }
+
+    private sealed class DarkColorTable : ProfessionalColorTable
+    {
+        public override Color ToolStripDropDownBackground => DarkColors.Background;
+        public override Color MenuBorder => DarkColors.Border;
+        public override Color MenuItemBorder => DarkColors.Border;
+        public override Color MenuItemSelected => DarkColors.Selection;
+        public override Color MenuItemSelectedGradientBegin => DarkColors.Selection;
+        public override Color MenuItemSelectedGradientEnd => DarkColors.Selection;
+        public override Color MenuItemPressedGradientBegin => DarkColors.Selection;
+        public override Color MenuItemPressedGradientMiddle => DarkColors.Selection;
+        public override Color MenuItemPressedGradientEnd => DarkColors.Selection;
+        public override Color CheckBackground => DarkColors.Selection;
+        public override Color CheckSelectedBackground => DarkColors.Selection;
+        public override Color CheckPressedBackground => DarkColors.Selection;
+        public override Color ImageMarginGradientBegin => DarkColors.Background;
+        public override Color ImageMarginGradientMiddle => DarkColors.Background;
+        public override Color ImageMarginGradientEnd => DarkColors.Background;
+        public override Color SeparatorDark => DarkColors.Border;
+        public override Color SeparatorLight => DarkColors.Border;
     }
 }
