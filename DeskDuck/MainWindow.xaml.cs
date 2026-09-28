@@ -23,6 +23,12 @@ namespace DeskDuck
             DataContext = viewModel;
         }
 
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+            WindowChrome.Tint(this);
+        }
+
         private void SessionsButton_Click(object sender, RoutedEventArgs e)
         {
             if (_sessionsWindow is null)

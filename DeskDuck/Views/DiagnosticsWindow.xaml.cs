@@ -12,5 +12,11 @@ namespace DeskDuck.Views
         {
             InitializeComponent();
         }
+
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+            WindowChrome.Tint(this);
+        }
     }
 }

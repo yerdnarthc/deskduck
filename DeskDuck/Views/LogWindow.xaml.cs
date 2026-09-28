@@ -36,5 +36,11 @@ namespace DeskDuck.Views
             if (DataContext is MainViewModel vm)
                 vm.ClearLog();
         }
+
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+            WindowChrome.Tint(this);
+        }
     }
 }
