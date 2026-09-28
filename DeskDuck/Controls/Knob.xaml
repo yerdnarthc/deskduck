@@ -8,7 +8,9 @@
                            Minimum="{Binding Minimum, RelativeSource={RelativeSource AncestorType=UserControl}}"
                            Maximum="{Binding Maximum, RelativeSource={RelativeSource AncestorType=UserControl}}"
                            Value="{Binding Value, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-        <TextBlock x:Name="ValueText" HorizontalAlignment="Center" FontWeight="SemiBold" FontSize="13"/>
-        <TextBlock x:Name="CaptionText" HorizontalAlignment="Center" Foreground="Gray" FontSize="11"/>
+        <TextBlock x:Name="ValueText" HorizontalAlignment="Center" FontWeight="SemiBold" FontSize="13"
+                   Foreground="{StaticResource CreamBrush}"/>
+        <TextBlock x:Name="CaptionText" HorizontalAlignment="Center" FontSize="11"
+                   Foreground="{StaticResource MutedBrush}"/>
     </StackPanel>
 </UserControl>
