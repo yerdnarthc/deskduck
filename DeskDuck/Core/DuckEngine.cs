@@ -58,12 +58,21 @@ public sealed class DuckEngine
     }
 
     /// <summary>
-    /// Re-evaluate after any session change.
+    /// Gap (dB) between engaging and releasing in Level mode. Without this,
+    /// audio hovering at the threshold would flicker duck on/off rapidly.
+    /// </summary>
+    private const double HysteresisDb = 3.0;
+
+    // Trigger apps currently latched "over threshold" in Level mode.
+    private readonly HashSet<string> _levelLatched = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Re-evaluate after any session/meter change.
     /// targetSignature identifies the current target sessions (ids joined);
     /// when it changes mid-duck we (re-)apply the ducked volume so a target
     /// that (re-)launches while a trigger is active gets ducked immediately.
     /// </summary>
-    public void Refresh(List<string> activeTriggers, string targetSignature)
+    public void Refresh(IReadOnlyList<TriggerReading> readings, string targetSignature)
     {
         if (_test != TestPhase.None) return;
         var settings = _getSettings();
@@ -78,6 +87,7 @@ public sealed class DuckEngine
         if (_state == DuckState.Disabled)
             SetState(DuckState.Normal, string.Empty);
 
+        List<string> activeTriggers = ResolveTriggers(readings, settings);
         bool shouldDuck = activeTriggers.Count > 0;
         string reason = shouldDuck ? $"{string.Join(", ", activeTriggers)} is ACTIVE" : string.Empty;
 
@@ -117,7 +127,8 @@ public sealed class DuckEngine
         }
         else if (_state == DuckState.Ducked)
         {
-            SetState(DuckState.Holding, "all triggers inactive — holding");
+            bool levelMode = string.Equals(settings.TriggerMode, "Level", StringComparison.OrdinalIgnoreCase);
+            SetState(DuckState.Holding, levelMode ? "all triggers below threshold — holding" : "all triggers inactive — holding");
             _holdTimer.Interval = TimeSpan.FromMilliseconds(Math.Max(1, settings.HoldMilliseconds));
             _holdTimer.Start();
             _log($"Hold started: {settings.HoldMilliseconds} ms");
@@ -126,6 +137,52 @@ public sealed class DuckEngine
         {
             _releaseQueued = true; // finish the attack, then hold + release
         }
+    }
+
+    /// <summary>
+    /// Turns live readings into the duck/no-duck decision.
+    /// Activity mode: any ACTIVE session ducks (loudness ignored).
+    /// Level mode: an app latches "triggering" at the threshold and only
+    /// unlatches 3 dB below it (hysteresis against flicker).
+    /// </summary>
+    private List<string> ResolveTriggers(IReadOnlyList<TriggerReading> readings, AppSettings settings)
+    {
+        bool levelMode = string.Equals(settings.TriggerMode, "Level", StringComparison.OrdinalIgnoreCase);
+        if (!levelMode)
+        {
+            _levelLatched.Clear();
+            return readings.Where(r => r.IsActive).Select(r => r.Name).ToList();
+        }
+
+        foreach (var r in readings)
+        {
+            if (!r.IsActive)
+            {
+                if (_levelLatched.Remove(r.Name))
+                    _log($"{r.Name} went inactive — unlatching.");
+                continue;
+            }
+            if (_levelLatched.Contains(r.Name))
+            {
+                if (r.PeakDb < settings.ThresholdDb - HysteresisDb)
+                {
+                    _levelLatched.Remove(r.Name);
+                    _log($"{r.Name} fell to {r.PeakDb:0} dB (release below {settings.ThresholdDb - HysteresisDb:0} dB).");
+                }
+            }
+            else if (r.PeakDb >= settings.ThresholdDb)
+            {
+                _levelLatched.Add(r.Name);
+                _log($"{r.Name} hit {r.PeakDb:0} dB (threshold {settings.ThresholdDb:0} dB).");
+            }
+        }
+        // Drop apps that vanished entirely (e.g. process closed).
+        _levelLatched.RemoveWhere(name => readings.All(r => r.Name != name));
+
+        return readings
+            .Where(r => _levelLatched.Contains(r.Name))
+            .Select(r => $"{r.Name} ({r.PeakDb:0} dB ≥ {settings.ThresholdDb:0} dB)")
+            .ToList();
     }
 
     /// <summary>

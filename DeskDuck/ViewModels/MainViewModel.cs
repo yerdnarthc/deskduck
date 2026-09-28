@@ -46,13 +46,15 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             OnPropertyChanged(nameof(TargetVolumeText));
         };
         _monitor.SessionsChanged += OnSessionsChanged;
+        _monitor.MetersChanged += OnMetersChanged;
 
         TestDuckCommand = new RelayCommand(() => _engine.TestDuck());
 
         _monitor.Start();
         OnSessionsChanged(); // initial paint
         Log($"Settings: {Settings.TargetProcessName} | duck {Settings.DuckFactor:0%} | " +
-            $"A{Settings.AttackMilliseconds}/H{Settings.HoldMilliseconds}/R{Settings.ReleaseMilliseconds}ms");
+            $"A{Settings.AttackMilliseconds}/H{Settings.HoldMilliseconds}/R{Settings.ReleaseMilliseconds}ms | " +
+            $"mode {Settings.TriggerMode} ({Settings.ThresholdDb:0} dB)");
     }
 
     // ---- bindable settings (validated, auto-saved) ----
@@ -138,6 +140,46 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
+    // ---- trigger mode + threshold ----
+
+    public bool IsActivityMode
+    {
+        get => !string.Equals(Settings.TriggerMode, "Level", StringComparison.OrdinalIgnoreCase);
+        set
+        {
+            if (value == IsActivityMode) return;
+            Settings.TriggerMode = value ? "Activity" : "Level";
+            SaveAndRefresh();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsLevelMode));
+            Log($"Trigger mode: {Settings.TriggerMode}" +
+                (IsLevelMode ? $" (threshold {Settings.ThresholdDb:0} dB)" : " (session ACTIVE state)"));
+        }
+    }
+
+    public bool IsLevelMode
+    {
+        get => !IsActivityMode;
+        set => IsActivityMode = !value;
+    }
+
+    /// <summary>Threshold in dBFS, -60 (anything audible) to 0 (only full-scale).</summary>
+    public int ThresholdDb
+    {
+        get => (int)Math.Round(Settings.ThresholdDb);
+        set
+        {
+            value = Math.Clamp(value, -60, 0);
+            if (ThresholdDb == value) return;
+            Settings.ThresholdDb = value;
+            SaveAndRefresh();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ThresholdText));
+        }
+    }
+
+    public string ThresholdText => $"{ThresholdDb} dB";
+
     // ---- status ----
 
     public string StatusText => _engine.State.ToString().ToUpperInvariant();
@@ -145,7 +187,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public string DeviceName => _monitor.DeviceName;
     public string TargetVolumeText => $"Target volume: {_engine.CurrentVolume:0%}";
 
-    // ---- core reaction: any session change re-evaluates the trigger ----
+    // ---- core reaction: any session/meter change re-evaluates the trigger ----
 
     private void OnSessionsChanged()
     {
@@ -162,9 +204,30 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         SyncTriggerOptions(discovered);
         OnPropertyChanged(nameof(DeviceName));
 
-        var active = _monitor.GetActiveTriggers(Settings.TargetProcessName, Settings.TriggerProcesses);
-        string signature = string.Join("|", snapshot.Where(s => s.IsTarget).Select(s => s.SessionId));
-        _engine.Refresh(active, signature);
+        RefreshEngine();
+    }
+
+    /// <summary>
+    /// Meter tick (10x/sec): update dB readouts in place and re-evaluate.
+    /// No collection rebuild, no logging — only the engine decision runs.
+    /// </summary>
+    private void OnMetersChanged()
+    {
+        if (_disposed) return;
+        var levels = _monitor.GetLevels();
+        foreach (var row in Sessions)
+        {
+            if (levels.TryGetValue(row.SessionId, out double db))
+                row.LevelDb = db;
+        }
+        RefreshEngine();
+    }
+
+    private void RefreshEngine()
+    {
+        var readings = _monitor.GetTriggerReadings(Settings.TargetProcessName, Settings.TriggerProcesses);
+        string signature = string.Join("|", Sessions.Where(s => s.IsTarget).Select(s => s.SessionId));
+        _engine.Refresh(readings, signature);
     }
 
     /// <summary>Checklist = configured triggers ∪ currently discovered apps.</summary>

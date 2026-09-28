@@ -37,6 +37,14 @@ public sealed class SessionMonitor : IDisposable
     /// <summary>Raised (on the UI thread) whenever the session list or any state changes.</summary>
     public event Action? SessionsChanged;
 
+    /// <summary>
+    /// Raised ~10x/sec with fresh peak levels. No logging here — too noisy.
+    /// The ViewModel updates dB readouts in place and re-evaluates ducking.
+    /// </summary>
+    public event Action? MetersChanged;
+
+    private DispatcherTimer? _meterTimer;
+
     public string DeviceName { get; private set; } = "(none)";
 
     public SessionMonitor(Dispatcher dispatcher, Action<string> log)
@@ -49,6 +57,12 @@ public sealed class SessionMonitor : IDisposable
     {
         _dispatcher.VerifyAccess();
         Initialize();
+        // Peak meters expose no events, so they must be polled. 100ms is
+        // plenty for a ducking trigger and costs one float read per session.
+        _meterTimer = new DispatcherTimer(
+            TimeSpan.FromMilliseconds(100), DispatcherPriority.Background,
+            (_, _) => SampleMeters(), _dispatcher);
+        _meterTimer.Start();
     }
 
     private void Initialize()
@@ -109,10 +123,40 @@ public sealed class SessionMonitor : IDisposable
                 ProcessName = t.ProcessName,
                 DisplayName = t.DisplayName,
                 State = t.State,
+                LevelDb = t.PeakDb,
                 IsSystemSounds = t.IsSystemSounds,
                 IsTarget = ProcessNames.Matches(t.ProcessName, target),
                 IsConfiguredTrigger = triggerSet.Contains(ProcessNames.Normalize(t.ProcessName))
             }).OrderBy(s => s.ProcessName).ThenBy(s => s.SessionId).ToList();
+        }
+    }
+
+    /// <summary>Session-id → current peak dB. Cheap; used by the 10Hz meter tick.</summary>
+    public Dictionary<string, double> GetLevels()
+    {
+        lock (_gate)
+            return _sessions.ToDictionary(kv => kv.Key, kv => kv.Value.PeakDb);
+    }
+
+    /// <summary>
+    /// One reading per configured trigger app (excluding the target):
+    /// the loudest of its ACTIVE sessions, or -60 dB when none are active.
+    /// </summary>
+    public List<TriggerReading> GetTriggerReadings(string target, IEnumerable<string> triggers)
+    {
+        var triggerSet = new HashSet<string>(triggers.Select(ProcessNames.Normalize),
+            StringComparer.OrdinalIgnoreCase);
+        lock (_gate)
+        {
+            return _sessions.Values
+                .Where(t => triggerSet.Contains(ProcessNames.Normalize(t.ProcessName))
+                    && !ProcessNames.Matches(t.ProcessName, target))
+                .GroupBy(t => ProcessNames.Normalize(t.ProcessName), StringComparer.OrdinalIgnoreCase)
+                .Select(g => new TriggerReading(
+                    g.Key,
+                    g.Where(t => t.State == "Active").Select(t => t.PeakDb).DefaultIfEmpty(-60).Max(),
+                    g.Any(t => t.State == "Active")))
+                .ToList();
         }
     }
 
@@ -277,8 +321,29 @@ public sealed class SessionMonitor : IDisposable
     public void Dispose()
     {
         _disposed = true;
+        _meterTimer?.Stop();
+        _meterTimer = null;
         TearDownAudioObjects();
     }
+
+    /// <summary>
+    /// Reads each session's peak meter (runs on the UI thread via timer).
+    /// Dead sessions read as silence; expiry itself is handled by events.
+    /// </summary>
+    private void SampleMeters()
+    {
+        if (_disposed) return;
+        lock (_gate)
+        {
+            foreach (var t in _sessions.Values)
+                t.SampleMeter();
+        }
+        MetersChanged?.Invoke();
+    }
+
+    /// <summary>Linear 0–1 peak to dBFS, floored at -60 (silence).</summary>
+    internal static double ToDb(float peak) =>
+        peak <= 0.0001f ? -60 : Math.Max(-60, 20 * Math.Log10(peak));
 
     /// <summary>
     /// NAudio's enum members are named AudioSessionStateActive etc.;
@@ -305,6 +370,18 @@ public sealed class SessionMonitor : IDisposable
         public string DisplayName { get; }
         public bool IsSystemSounds { get; }
         public string State { get; set; }
+        public double PeakDb { get; private set; } = -60;
+
+        /// <summary>One peak-meter read. Never throws; dead sessions stay silent.</summary>
+        public void SampleMeter()
+        {
+            try
+            {
+                var meters = Control.AudioMeterInformation;
+                PeakDb = meters is null ? -60 : ToDb(meters.MasterPeakValue);
+            }
+            catch { PeakDb = -60; }
+        }
 
         public TrackedSession(AudioSessionControl control, Action<string> stateChanged)
         {
