@@ -127,10 +127,10 @@
             </GroupBox>
 
             <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                <Button Content="{Binding SessionsCount, StringFormat='_Sessions ({0})'}"
+                <Button Content="{Binding SessionsButtonText}"
                         Click="SessionsButton_Click" Margin="0,0,8,0"
                         ToolTip="Open the live audio-session monitor (Alt+S)"/>
-                <Button Content="{Binding LogCount, StringFormat='_Log ({0})'}"
+                <Button Content="{Binding LogButtonText}"
                         Click="LogButton_Click"
                         ToolTip="Open the event log (Alt+L)"/>
             </StackPanel>

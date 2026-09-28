@@ -191,10 +191,18 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public int SessionsCount => Sessions.Count;
     public int LogCount => LogLines.Count;
 
+    // Preformatted here (not via Binding.StringFormat in XAML): StringFormat
+    // is silently ignored when the target property isn't a string, and
+    // Button.Content is object — which is exactly how the buttons ended up
+    // showing bare numbers. The underscore keeps the Alt+S / Alt+L keys.
+    public string SessionsButtonText => $"_Sessions ({SessionsCount})";
+    public string LogButtonText => $"_Log ({LogCount})";
+
     public void ClearLog()
     {
         LogLines.Clear();
         OnPropertyChanged(nameof(LogCount));
+        OnPropertyChanged(nameof(LogButtonText));
     }
 
     /// <summary>Flags rows currently causing the duck (highlighted in diagnostics).</summary>
@@ -221,6 +229,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         SyncTriggerOptions(discovered);
         OnPropertyChanged(nameof(DeviceName));
         OnPropertyChanged(nameof(SessionsCount));
+        OnPropertyChanged(nameof(SessionsButtonText));
 
         RefreshEngine();
     }
@@ -336,6 +345,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             LogLines.Add($"[{DateTime.Now:HH:mm:ss}] {message}");
             while (LogLines.Count > 300) LogLines.RemoveAt(0);
             OnPropertyChanged(nameof(LogCount));
+            OnPropertyChanged(nameof(LogButtonText));
         });
     }
 
