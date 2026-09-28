@@ -1,0 +1,99 @@
+<Window x:Class="DeskDuck.Views.HelpWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="DeskDuck User Guide" Height="750" Width="650"
+        MinHeight="420" MinWidth="380"
+        Icon="../Assets/Icons/DeskDuck Logo (Transparent).png"
+        ShowInTaskbar="False" WindowStartupLocation="CenterOwner"
+        Background="{StaticResource AppBackgroundBrush}"
+        Foreground="{StaticResource TextBrush}"
+        FontFamily="{StaticResource AppFontFamily}"
+        FontSize="13">
+    <Window.Resources>
+        <Style x:Key="DocTitle" TargetType="Paragraph">
+            <Setter Property="FontSize" Value="22"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,2"/>
+        </Style>
+        <Style x:Key="DocSubtitle" TargetType="Paragraph">
+            <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
+        <Style x:Key="DocH1" TargetType="Paragraph">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Margin" Value="0,18,0,6"/>
+        </Style>
+        <Style x:Key="DocH2" TargetType="Paragraph">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Margin" Value="0,10,0,4"/>
+        </Style>
+        <Style TargetType="Paragraph">
+            <Setter Property="Margin" Value="0,0,0,6"/>
+            <Setter Property="LineHeight" Value="20"/>
+        </Style>
+        <Style TargetType="List">
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+    </Window.Resources>
+    <FlowDocumentScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
+        <!-- FlowDocument does not inherit FontFamily/FontSize from the host
+             window (it carries its own defaults), so both are set here. -->
+        <FlowDocument FontFamily="{StaticResource AppFontFamily}" FontSize="13">
+            <Paragraph Style="{StaticResource DocTitle}">DeskDuck User Guide</Paragraph>
+            <Paragraph Style="{StaticResource DocSubtitle}">Everything the app does, in the order you meet it on screen.</Paragraph>
+
+            <Paragraph Style="{StaticResource DocH1}">1. The idea</Paragraph>
+            <Paragraph>DeskDuck keeps your music at full volume until one of your chosen apps actually starts making sound. Then it dips the music, holds it down while that app is going, and brings it back when things go quiet.</Paragraph>
+
+            <Paragraph Style="{StaticResource DocH1}">2. Quick setup</Paragraph>
+            <List MarkerStyle="Decimal">
+                <ListItem><Paragraph><Bold>WHAT TO DUCK:</Bold> pick your music app (usually Spotify).</Paragraph></ListItem>
+                <ListItem><Paragraph><Bold>WHEN TO DUCK:</Bold> tick the apps that should dip your music, like your music software, game engine, or browser.</Paragraph></ListItem>
+                <ListItem><Paragraph>Flip the <Bold>Enabled</Bold> switch on.</Paragraph></ListItem>
+            </List>
+
+            <Paragraph Style="{StaticResource DocH1}">3. What to duck</Paragraph>
+            <Paragraph>The target is the one app whose volume DeskDuck controls. Nothing else on your system is ever touched, not the master volume and not other apps. If the target is closed, DeskDuck waits quietly until it comes back.</Paragraph>
+
+            <Paragraph Style="{StaticResource DocH1}">4. When to duck</Paragraph>
+            <Paragraph>These are the trigger apps. At least one of them has to qualify before the music dips. Two modes decide what qualifies:</Paragraph>
+            <Paragraph Style="{StaticResource DocH2}">4.1. Session activity</Paragraph>
+            <Paragraph>Dips the music whenever a ticked app's sound engine is running, even if what it plays is barely audible. Pick this for quiet background work that should always win.</Paragraph>
+            <Paragraph Style="{StaticResource DocH2}">4.2. Audio level</Paragraph>
+            <Paragraph>Dips only while a ticked app is louder than your threshold. Set the threshold with the slider and watch the Level column in the Sessions window to find the right spot. The dip lets go a few decibels below the threshold so it never flickers.</Paragraph>
+
+            <Paragraph Style="{StaticResource DocH1}">5. How loud</Paragraph>
+            <List MarkerStyle="Disc">
+                <ListItem><Paragraph><Bold>Duck to:</Bold> how far the music dips. 1% is close to silent, 100% means no dip at all.</Paragraph></ListItem>
+                <ListItem><Paragraph><Bold>Attack:</Bold> how fast the music dips.</Paragraph></ListItem>
+                <ListItem><Paragraph><Bold>Hold:</Bold> how long DeskDuck waits after things go quiet before bringing the music back.</Paragraph></ListItem>
+                <ListItem><Paragraph><Bold>Release:</Bold> how fast the music comes back.</Paragraph></ListItem>
+            </List>
+
+            <Paragraph Style="{StaticResource DocH1}">6. Reading the status</Paragraph>
+            <List MarkerStyle="Disc">
+                <ListItem><Paragraph><Bold>NORMAL:</Bold> the music is untouched.</Paragraph></ListItem>
+                <ListItem><Paragraph><Bold>DUCKED:</Bold> a trigger is going and the music is dipped.</Paragraph></ListItem>
+                <ListItem><Paragraph><Bold>HOLDING</Bold> and <Bold>RELEASING:</Bold> the triggers went quiet and the music is on its way back.</Paragraph></ListItem>
+                <ListItem><Paragraph><Bold>DISABLED:</Bold> the master switch is off and DeskDuck will not touch anything.</Paragraph></ListItem>
+            </List>
+            <Paragraph><Bold>Test Duck</Bold> runs one dip-and-restore on demand, so you can check your volumes without starting a trigger app.</Paragraph>
+
+            <Paragraph Style="{StaticResource DocH1}">7. Behind the scenes</Paragraph>
+            <List MarkerStyle="Disc">
+                <ListItem><Paragraph><Bold>Sessions</Bold> shows every app making sound and highlights the one causing the dip. Open it when you wonder why the music dipped.</Paragraph></ListItem>
+                <ListItem><Paragraph><Bold>Log</Bold> records what DeskDuck did and when. Open it when something behaved unexpectedly.</Paragraph></ListItem>
+            </List>
+
+            <Paragraph Style="{StaticResource DocH1}">8. Words worth knowing</Paragraph>
+            <List MarkerStyle="Disc">
+                <ListItem><Paragraph><Bold>dB (decibel)</Bold> is a loudness scale. 0 is the loudest, −60 is silence. A higher threshold such as −10 means only loud sounds count. A lower one such as −50 means almost anything counts.</Paragraph></ListItem>
+                <ListItem><Paragraph><Bold>ACTIVE</Bold> means the app is currently sending sound to Windows, even very quiet sound. Just having the app open does not count.</Paragraph></ListItem>
+                <ListItem><Paragraph><Bold>To duck</Bold> means to turn the music down briefly, then bring it back. Think of a DJ dipping the music to talk over it.</Paragraph></ListItem>
+            </List>
+        </FlowDocument>
+    </FlowDocumentScrollViewer>
+</Window>

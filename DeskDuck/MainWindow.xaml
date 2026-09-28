@@ -5,113 +5,192 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:DeskDuck.Controls"
         mc:Ignorable="d"
-        Title="DeskDuck" Height="860" Width="440"
-        MinHeight="600" MinWidth="380">
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12">
+        Title="DeskDuck" Height="1060" Width="550"
+        MinHeight="560" MinWidth="380"
+        Icon="Assets/Icons/DeskDuck Logo (Transparent).png"
+        Background="{StaticResource AppBackgroundBrush}"
+        Foreground="{StaticResource TextBrush}"
+        FontFamily="{StaticResource AppFontFamily}"
+        FontSize="13">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </Window.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20" Background="Transparent">
         <StackPanel Orientation="Vertical">
-            <TextBlock Text="DeskDuck" FontSize="20" FontWeight="Bold"/>
-            <TextBlock Text="{Binding DeviceName, StringFormat='Output: {0}'}" Foreground="Gray" Margin="0,0,0,8"/>
+            <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Image Source="Assets/Icons/DeskDuck Logo (Transparent).png" Width="46" Height="46"
+                           Margin="0,0,12,0" AutomationProperties.Name="DeskDuck logo"/>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="DeskDuck" FontSize="30" FontWeight="Bold"
+                                   Foreground="{StaticResource AccentBrush}"/>
+                        <TextBlock Text="{Binding DeviceName, StringFormat='Output: {0}'}" Style="{StaticResource MutedText}"/>
+                    </StackPanel>
+                </StackPanel>
+                <Button Grid.Column="1" Content="?" Style="{StaticResource CircleButton}"
+                        VerticalAlignment="Top" Margin="0,4,0,0" Click="HelpButton_Click"
+                        AutomationProperties.Name="Help - how to use DeskDuck"
+                        ToolTip="How to use DeskDuck"/>
+            </Grid>
 
-            <Label Target="{Binding ElementName=TargetBox}" Content="Music application (duck target)"/>
+            <!-- Status hero: what the app is doing right now, at a glance. -->
+            <Border Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="16">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse Width="14" Height="14" Margin="0,0,8,0">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="{StaticResource TextBrush}"/>
+                                        <Style.Triggers>
+                                            <!-- Amber for the whole duck cycle: the target is still
+                                                 ducked through hold and release, not just while held. -->
+                                            <DataTrigger Binding="{Binding StatusText}" Value="DUCKED">
+                                                <Setter Property="Fill" Value="{StaticResource AccentBrush}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding StatusText}" Value="DUCKING">
+                                                <Setter Property="Fill" Value="{StaticResource AccentBrush}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding StatusText}" Value="HOLDING">
+                                                <Setter Property="Fill" Value="{StaticResource AccentBrush}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding StatusText}" Value="RELEASING">
+                                                <Setter Property="Fill" Value="{StaticResource AccentBrush}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding StatusText}" Value="DISABLED">
+                                                <Setter Property="Fill" Value="{StaticResource FaintBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <TextBlock Text="{Binding StatusText}" FontWeight="Bold" FontSize="20" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <!-- Primary toggle: top-right of the hero, impossible to miss. -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Enabled" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <CheckBox IsChecked="{Binding Enabled}" Style="{StaticResource PowerToggle}"
+                                      AutomationProperties.Name="Enable automatic ducking"
+                                      ToolTip="Master switch — when off, DeskDuck never changes the target volume"/>
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Text="{Binding Reason}" Style="{StaticResource MutedText}" Margin="0,2,0,0"/>
+                    <TextBlock Text="{Binding TargetVolumeText}" Style="{StaticResource MutedText}"/>
+                    <Button Content="Test Duck" Command="{Binding TestDuckCommand}" Style="{StaticResource PrimaryButton}"
+                            HorizontalAlignment="Stretch" Margin="0,12,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <GroupBox Header="WHAT TO DUCK">
+                <StackPanel>
+                    <Label Target="{Binding ElementName=TargetBox}" Content="Music app"/>
             <ComboBox x:Name="TargetBox" IsEditable="True"
-                      ItemsSource="{Binding AvailableApps}" DisplayMemberPath="Label"
+                      ItemsSource="{Binding AvailableApps}"
                       Text="{Binding TargetProcessName, UpdateSourceTrigger=LostFocus}"
                       DropDownClosed="TargetBox_DropDownClosed"
-                      ToolTip="Process name of the music app, e.g. Spotify"/>
-
-            <Label Content="Trigger applications"/>
-            <ListBox ItemsSource="{Binding TriggerOptions}" MaxHeight="120" BorderThickness="1">
-                <ListBox.ItemTemplate>
+                      ToolTip="Process name of the music app, e.g. Spotify">
+                <ComboBox.ItemTemplate>
                     <DataTemplate>
-                        <CheckBox Content="{Binding Label}" IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,6,0">
+                                <Image.Style>
+                                    <Style TargetType="Image">
+                                        <Style.Triggers>
+                                            <Trigger Property="Source" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Image.Style>
+                            </Image>
+                            <TextBlock Text="{Binding Label}" VerticalAlignment="Center"/>
+                        </StackPanel>
                     </DataTemplate>
-                </ListBox.ItemTemplate>
-            </ListBox>
-
-            <GroupBox Header="Trigger mode" Margin="0,8,0,0">
-                <StackPanel>
-                    <RadioButton Content="Session activity (duck while a trigger is ACTIVE, any loudness)"
-                                 IsChecked="{Binding IsActivityMode}" Margin="0,2"/>
-                    <RadioButton Content="Audio level (duck while a trigger is louder than…)"
-                                 IsChecked="{Binding IsLevelMode}" Margin="0,2"/>
-                    <Label Target="{Binding ElementName=ThresholdSlider}" Content="{Binding ThresholdText, StringFormat='Threshold: {0}'}"/>
-                    <Slider x:Name="ThresholdSlider" Minimum="-60" Maximum="0" TickFrequency="3" IsSnapToTickEnabled="True"
-                            Value="{Binding ThresholdDb, UpdateSourceTrigger=PropertyChanged}"
-                            IsEnabled="{Binding IsLevelMode}"
-                            ToolTip="Peak level that engages ducking; releases 3 dB below this"/>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
                 </StackPanel>
             </GroupBox>
 
-            <Label Target="{Binding ElementName=DuckSlider}" Content="{Binding DuckFactorText, StringFormat='Duck to {0} of normal volume'}"/>
-            <Slider x:Name="DuckSlider" Minimum="1" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True"
-                    Value="{Binding DuckFactorPercent, UpdateSourceTrigger=PropertyChanged}"/>
+            <GroupBox Header="WHEN TO DUCK">
+                <StackPanel>
+                    <ListBox ItemsSource="{Binding TriggerOptions}" MaxHeight="130" BorderThickness="1"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}">
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,6,0">
+                                    <Image.Style>
+                                        <Style TargetType="Image">
+                                            <Style.Triggers>
+                                                <Trigger Property="Source" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
+                                <TextBlock Text="{Binding Label}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </CheckBox>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+                    </ListBox>
+                    <RadioButton Content="Session activity (any loudness)"
+                                 IsChecked="{Binding IsActivityMode}" Margin="0,14,0,2"
+                                 ToolTip="Duck while a trigger's audio session is ACTIVE"/>
+                    <RadioButton Content="Audio level (louder than…)"
+                                 IsChecked="{Binding IsLevelMode}" Margin="0,10"
+                                 ToolTip="Duck while a trigger's peak level is above the threshold"/>
+                    <StackPanel Visibility="{Binding IsLevelMode, Converter={StaticResource BoolToVis}}">
+                        <Label Target="{Binding ElementName=ThresholdSlider}" Content="{Binding ThresholdText, StringFormat='Threshold: {0}'}"/>
+                        <Slider x:Name="ThresholdSlider" Minimum="-60" Maximum="0" TickFrequency="3" IsSnapToTickEnabled="True"
+                                Value="{Binding ThresholdDb, UpdateSourceTrigger=PropertyChanged}"
+                                ToolTip="Peak level that engages ducking; releases 3 dB below this"/>
+                    </StackPanel>
+                </StackPanel>
+            </GroupBox>
 
-            <UniformGrid Columns="3" Margin="0,8,0,0" Rows="1">
-                <controls:Knob Caption="Attack" Unit="ms" Minimum="0" Maximum="5000"
-                               Step="5" DefaultValue="100"
-                               Value="{Binding AttackMilliseconds, UpdateSourceTrigger=PropertyChanged}"
-                               ToolTip="Fade time into ducking. Drag, scroll, or use arrow keys; double-click resets to 100 ms."/>
-                <controls:Knob Caption="Hold" Unit="ms" Minimum="0" Maximum="10000"
-                               Step="10" DefaultValue="400"
-                               Value="{Binding HoldMilliseconds, UpdateSourceTrigger=PropertyChanged}"
-                               ToolTip="Wait after triggers go quiet before releasing. Double-click resets to 400 ms."/>
-                <controls:Knob Caption="Release" Unit="ms" Minimum="0" Maximum="10000"
-                               Step="10" DefaultValue="800"
-                               Value="{Binding ReleaseMilliseconds, UpdateSourceTrigger=PropertyChanged}"
-                               ToolTip="Fade time back to normal volume. Double-click resets to 800 ms."/>
-            </UniformGrid>
-            <TextBlock Text="Tip: hold Shift while dragging for fine control." Foreground="Gray" FontSize="11" HorizontalAlignment="Center"/>
+            <GroupBox Header="HOW LOUD">
+                <StackPanel>
+                    <Label Target="{Binding ElementName=DuckSlider}" Content="{Binding DuckFactorText, StringFormat='Duck to {0} of normal volume'}"/>
+                    <Slider x:Name="DuckSlider" Minimum="1" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True"
+                            Value="{Binding DuckFactorPercent, UpdateSourceTrigger=PropertyChanged}"/>
+                    <UniformGrid Columns="3" Margin="0,12,0,0" Rows="1">
+                        <controls:Knob Caption="Attack" Unit="ms" Minimum="0" Maximum="5000"
+                                       Step="5" DefaultValue="100"
+                                       Value="{Binding AttackMilliseconds, UpdateSourceTrigger=PropertyChanged}"
+                                       ToolTip="Fade time into ducking. Drag, scroll, or use arrow keys; double-click resets to 100 ms."/>
+                        <controls:Knob Caption="Hold" Unit="ms" Minimum="0" Maximum="10000"
+                                       Step="10" DefaultValue="400"
+                                       Value="{Binding HoldMilliseconds, UpdateSourceTrigger=PropertyChanged}"
+                                       ToolTip="Wait after triggers go quiet before releasing. Double-click resets to 400 ms."/>
+                        <controls:Knob Caption="Release" Unit="ms" Minimum="0" Maximum="10000"
+                                       Step="10" DefaultValue="800"
+                                       Value="{Binding ReleaseMilliseconds, UpdateSourceTrigger=PropertyChanged}"
+                                       ToolTip="Fade time back to normal volume. Double-click resets to 800 ms."/>
+                    </UniformGrid>
+                    <TextBlock Text="Tip: hold Shift while dragging a knob for fine control."
+                               Style="{StaticResource MutedText}" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                </StackPanel>
+            </GroupBox>
 
-            <StackPanel Orientation="Horizontal" Margin="0,12,0,0" VerticalAlignment="Center">
-                <Ellipse Width="12" Height="12" Margin="0,0,6,0">
-                    <Ellipse.Style>
-                        <Style TargetType="Ellipse">
-                            <Setter Property="Fill" Value="Green"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding StatusText}" Value="DUCKED">
-                                    <Setter Property="Fill" Value="Orange"/>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding StatusText}" Value="DUCKING">
-                                    <Setter Property="Fill" Value="Orange"/>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding StatusText}" Value="HOLDING">
-                                    <Setter Property="Fill" Value="DodgerBlue"/>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding StatusText}" Value="RELEASING">
-                                    <Setter Property="Fill" Value="DodgerBlue"/>
-                                </DataTrigger>
-                                <DataTrigger Binding="{Binding StatusText}" Value="DISABLED">
-                                    <Setter Property="Fill" Value="Gray"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Ellipse.Style>
-                </Ellipse>
-                <TextBlock Text="{Binding StatusText}" FontWeight="Bold" VerticalAlignment="Center"/>
-                <TextBlock Text="{Binding TargetVolumeText}" Margin="8,0,0,0" Foreground="Gray" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                <Button Content="{Binding SessionsButtonText}"
+                        Click="SessionsButton_Click" Margin="0,0,8,0"
+                        ToolTip="Open the live audio-session monitor (Alt+S)"/>
+                <Button Content="{Binding LogButtonText}"
+                        Click="LogButton_Click"
+                        ToolTip="Open the event log (Alt+L)"/>
             </StackPanel>
-            <TextBlock Text="{Binding Reason}" FontStyle="Italic" Foreground="Gray" TextWrapping="Wrap"/>
-
-            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                <CheckBox Content="Enabled" IsChecked="{Binding Enabled}" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                <Button Content="Test Duck" Command="{Binding TestDuckCommand}" Padding="12,4"/>
-            </StackPanel>
-
-            <Label Content="Live audio sessions" Margin="0,8,0,0" FontWeight="Bold"/>
-            <ListView ItemsSource="{Binding Sessions}" Height="150">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Header="Application" Width="130" DisplayMemberBinding="{Binding ProcessName}"/>
-                        <GridViewColumn Header="PID" Width="55" DisplayMemberBinding="{Binding ProcessId}"/>
-                        <GridViewColumn Header="State" Width="65" DisplayMemberBinding="{Binding State}"/>
-                        <GridViewColumn Header="Level" Width="60" DisplayMemberBinding="{Binding LevelText}"/>
-                        <GridViewColumn Header="Role" Width="70" DisplayMemberBinding="{Binding Role}"/>
-                    </GridView>
-                </ListView.View>
-            </ListView>
-
-            <Label Content="Log" Margin="0,8,0,0" FontWeight="Bold"/>
-            <ListBox ItemsSource="{Binding LogLines}" Height="120" FontFamily="Consolas" FontSize="11"/>
         </StackPanel>
     </ScrollViewer>
 </Window>

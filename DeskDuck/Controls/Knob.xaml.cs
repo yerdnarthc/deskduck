@@ -205,10 +205,12 @@ public sealed class DialDisplay : FrameworkElement
         double currentAngle = MinAngle + fraction * (MaxAngle - MinAngle);
         bool enabled = IsEnabled;
 
-        Brush trackBrush = enabled ? new SolidColorBrush(Color.FromRgb(0xD4, 0xD4, 0xD4)) : Brushes.LightGray;
-        Brush accentBrush = enabled ? new SolidColorBrush(Color.FromRgb(0x1E, 0x90, 0xFF)) : Brushes.Gray;
-        Brush tickBrush = enabled ? new SolidColorBrush(Color.FromRgb(0xA6, 0xA6, 0xA6)) : Brushes.LightGray;
-        Brush needleBrush = enabled ? new SolidColorBrush(Color.FromRgb(0x33, 0x33, 0x33)) : Brushes.Gray;
+        // Theme-aware: pull token brushes so the dial follows Styles.xaml.
+        // Hardcoded fallbacks keep the control usable without the dictionary.
+        Brush trackBrush = enabled ? FindBrush("TrackBrush", Color.FromRgb(0xD4, 0xD4, 0xD4)) : FindBrush("FaintBrush", Colors.Gray);
+        Brush accentBrush = enabled ? FindBrush("AccentBrush", Color.FromRgb(0xFA, 0xAC, 0x43)) : FindBrush("FaintBrush", Colors.Gray);
+        Brush tickBrush = enabled ? FindBrush("FaintBrush", Color.FromRgb(0xA6, 0xA6, 0xA6)) : FindBrush("FaintBrush", Colors.Gray);
+        Brush needleBrush = enabled ? FindBrush("TextBrush", Color.FromRgb(0xDF, 0xDC, 0xDC)) : FindBrush("FaintBrush", Colors.Gray);
 
         // Ticks: 11 positions, major every 5th.
         for (int i = 0; i <= 10; i++)
@@ -231,6 +233,9 @@ public sealed class DialDisplay : FrameworkElement
             center, tip);
         dc.DrawEllipse(needleBrush, null, center, 4, 4);
     }
+
+    private static Brush FindBrush(string key, Color fallback) =>
+        Application.Current?.TryFindResource(key) as Brush ?? new SolidColorBrush(fallback);
 
     private static void DrawArc(DrawingContext dc, Point center, double radius,
         double fromAngle, double toAngle, Brush brush, double thickness)

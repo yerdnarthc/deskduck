@@ -186,7 +186,8 @@ public sealed class SessionMonitor : IDisposable
                 {
                     ProcessName = g.Key,
                     DisplayName = g.First().DisplayName,
-                    HasActiveSession = g.Any(t => t.State == "Active")
+                    HasActiveSession = g.Any(t => t.State == "Active"),
+                    ExecutablePath = g.First().ExecutablePath
                 })
                 .OrderBy(a => a.ProcessName, StringComparer.OrdinalIgnoreCase)
                 .ToList();
@@ -371,6 +372,7 @@ public sealed class SessionMonitor : IDisposable
         public bool IsSystemSounds { get; }
         public string State { get; set; }
         public double PeakDb { get; private set; } = -60;
+        public string ExecutablePath { get; }
 
         /// <summary>One peak-meter read. Never throws; dead sessions stay silent.</summary>
         public void SampleMeter()
@@ -410,6 +412,7 @@ public sealed class SessionMonitor : IDisposable
             State = ToShortState(state);
             DisplayName = string.IsNullOrWhiteSpace(display) ? ResolveProcessName(pid) : display;
             ProcessName = ResolveProcessName(pid);
+            ExecutablePath = ResolveProcessPath(pid);
             try { Control.RegisterEventClient(this); } catch { /* session already dead */ }
         }
 
@@ -421,6 +424,17 @@ public sealed class SessionMonitor : IDisposable
                 return p.ProcessName;
             }
             catch { return pid == 0 ? "System" : $"PID {pid}"; }
+        }
+
+        /// <summary>Exe path for icon lookup. Empty when unreadable — never throws.</summary>
+        private static string ResolveProcessPath(uint pid)
+        {
+            try
+            {
+                using var p = Process.GetProcessById((int)pid);
+                return p.MainModule?.FileName ?? string.Empty;
+            }
+            catch { return string.Empty; }
         }
 
         public void Dispose()

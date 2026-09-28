@@ -44,6 +44,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             OnPropertyChanged(nameof(StatusText));
             OnPropertyChanged(nameof(Reason));
             OnPropertyChanged(nameof(TargetVolumeText));
+            UpdateCausingDuck();
         };
         _monitor.SessionsChanged += OnSessionsChanged;
         _monitor.MetersChanged += OnMetersChanged;
@@ -187,6 +188,31 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public string DeviceName => _monitor.DeviceName;
     public string TargetVolumeText => $"Target volume: {_engine.CurrentVolume:0%}";
 
+    public int SessionsCount => Sessions.Count;
+    public int LogCount => LogLines.Count;
+
+    // Preformatted here (not via Binding.StringFormat in XAML): StringFormat
+    // is silently ignored when the target property isn't a string, and
+    // Button.Content is object — which is exactly how the buttons ended up
+    // showing bare numbers. The underscore keeps the Alt+S / Alt+L keys.
+    public string SessionsButtonText => $"_Sessions ({SessionsCount})";
+    public string LogButtonText => $"_Log ({LogCount})";
+
+    public void ClearLog()
+    {
+        LogLines.Clear();
+        OnPropertyChanged(nameof(LogCount));
+        OnPropertyChanged(nameof(LogButtonText));
+    }
+
+    /// <summary>Flags rows currently causing the duck (highlighted in diagnostics).</summary>
+    private void UpdateCausingDuck()
+    {
+        var active = new HashSet<string>(_engine.ActiveTriggers, StringComparer.OrdinalIgnoreCase);
+        foreach (var row in Sessions)
+            row.IsCausingDuck = active.Contains(row.ProcessName);
+    }
+
     // ---- core reaction: any session/meter change re-evaluates the trigger ----
 
     private void OnSessionsChanged()
@@ -198,10 +224,20 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         foreach (var s in snapshot) Sessions.Add(s);
 
         var discovered = _monitor.GetDiscoveredApps();
+        foreach (var app in discovered)
+            app.Icon = AppIconService.GetIcon(app.ExecutablePath);
+        var iconByApp = discovered
+            .GroupBy(a => a.ProcessName, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Icon, StringComparer.OrdinalIgnoreCase);
+        foreach (var s in snapshot)
+            if (iconByApp.TryGetValue(s.ProcessName, out var icon))
+                s.Icon = icon;
         SyncAppsInPlace(discovered);
 
         SyncTriggerOptions(discovered);
         OnPropertyChanged(nameof(DeviceName));
+        OnPropertyChanged(nameof(SessionsCount));
+        OnPropertyChanged(nameof(SessionsButtonText));
 
         RefreshEngine();
     }
@@ -239,6 +275,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             {
                 existing.DisplayName = d.DisplayName;
                 existing.HasActiveSession = d.HasActiveSession;
+                existing.ExecutablePath = d.ExecutablePath;
+                existing.Icon = d.Icon;
             }
         }
     }
@@ -266,7 +304,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _engine.Refresh(readings, signature);
     }
 
-    /// <summary>Checklist = configured triggers ∪ currently discovered apps.</summary>
+    /// <summary>
+    /// Checklist = configured triggers ∪ currently discovered apps, minus the
+    /// target itself. The target can never be its own trigger (the engine
+    /// ignores it), so offering it as a choice only invites confusion.
+    /// </summary>
     private void SyncTriggerOptions(List<DiscoveredApp> discovered)
     {
         var labels = discovered.ToDictionary(d => d.ProcessName, d => d.Label,
@@ -275,6 +317,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             .Concat(discovered.Select(d => d.ProcessName))
             .Select(ProcessNames.Normalize)
             .Where(n => !string.IsNullOrEmpty(n))
+            .Where(n => !ProcessNames.Matches(n, Settings.TargetProcessName))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -289,8 +332,9 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             if (existing.Contains(name)) continue;
             labels.TryGetValue(name, out string? label);
+            var source = discovered.FirstOrDefault(d => ProcessNames.Matches(d.ProcessName, name));
             bool selected = Settings.TriggerProcesses.Contains(name, StringComparer.OrdinalIgnoreCase);
-            TriggerOptions.Add(new TriggerEntry(name, label ?? name, selected, OnTriggerToggled));
+            TriggerOptions.Add(new TriggerEntry(name, label ?? name, selected, OnTriggerToggled, source?.Icon));
         }
     }
 
@@ -316,6 +360,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             LogLines.Add($"[{DateTime.Now:HH:mm:ss}] {message}");
             while (LogLines.Count > 300) LogLines.RemoveAt(0);
+            OnPropertyChanged(nameof(LogCount));
+            OnPropertyChanged(nameof(LogButtonText));
         });
     }
 
