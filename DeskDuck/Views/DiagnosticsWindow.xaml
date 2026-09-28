@@ -14,12 +14,31 @@
                    Text="Live Windows audio sessions. Orange rows are currently ducking the target."/>
         <ListView ItemsSource="{Binding Sessions}">
             <ListView.ItemContainerStyle>
-                <Style TargetType="ListViewItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsCausingDuck}" Value="True">
-                            <Setter Property="Background" Value="{StaticResource AccentSoftBrush}"/>
-                        </DataTrigger>
-                    </Style.Triggers>
+                <!-- GridView rows MUST host a GridViewRowPresenter (not a plain
+                     ContentPresenter) or columns collapse into ToString(). -->
+                <Style TargetType="ListViewItem">
+                    <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListViewItem">
+                                <Border x:Name="Row" Background="Transparent" Padding="4,2">
+                                    <GridViewRowPresenter Content="{TemplateBinding Content}"
+                                                          Columns="{TemplateBinding GridView.ColumnCollection}"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding IsCausingDuck}" Value="True">
+                                        <Setter TargetName="Row" Property="Background" Value="{StaticResource AccentSoftBrush}"/>
+                                    </DataTrigger>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Row" Property="Background" Value="{StaticResource HoverBrush}"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Row" Property="Background" Value="{StaticResource AccentSoftBrush}"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
                 </Style>
             </ListView.ItemContainerStyle>
             <ListView.View>
