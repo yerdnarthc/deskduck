@@ -1,0 +1,13 @@
+# Build output
+bin/
+obj/
+
+# Visual Studio / VS Code
+.vs/
+*.user
+*.suo
+TestResults/
+
+# NuGet
+*.nupkg
+*.snupkg
