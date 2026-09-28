@@ -3,8 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:DeskDuck.Controls"
         mc:Ignorable="d"
-        Title="DeskDuck" Height="760" Width="440"
+        Title="DeskDuck" Height="860" Width="440"
         MinHeight="600" MinWidth="380">
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12">
         <StackPanel Orientation="Vertical">
