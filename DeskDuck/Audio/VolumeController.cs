@@ -18,10 +18,11 @@ public sealed class VolumeController : IDisposable
 
     public void Invalidate()
     {
+        // Must never throw: called from error paths and shutdown.
+        try { _device?.Dispose(); } catch { }
         _manager = null;
-        _device?.Dispose();
         _device = null;
-        _enumerator?.Dispose();
+        try { _enumerator?.Dispose(); } catch { }
         _enumerator = null;
     }
 
