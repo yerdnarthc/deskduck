@@ -6,10 +6,18 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <ApplicationIcon>Assets\Icons\app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="NAudio" Version="3.1.0" />
+  </ItemGroup>
+
+  <!-- Bundled brand assets. Reference images (Images/) are deliberately
+       excluded — they never ship in the binary. -->
+  <ItemGroup>
+    <Resource Include="Assets\Fonts\*.ttf" />
+    <Resource Include="Assets\Icons\DeskDuck Logo (Transparent).png" />
   </ItemGroup>
 
 </Project>
