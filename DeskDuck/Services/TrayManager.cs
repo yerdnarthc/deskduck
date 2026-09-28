@@ -139,8 +139,9 @@ public sealed class TrayManager : IDisposable
     {
         public static readonly Color Background = Color.FromArgb(0x14, 0x14, 0x13); // #141413
         public static readonly Color Text = Color.FromArgb(0xDF, 0xDC, 0xDC);       // #dfdcdc
-        // Amber 28% over background — same role as AccentSoftBrush in-app.
-        public static readonly Color Selection = Color.FromArgb(0x54, 0x3E, 0x20);
+        // Hover/pressed: the card surface itself — a lighter gray straight
+        // from the palette, matching the in-app cards.
+        public static readonly Color Selection = Color.FromArgb(0x44, 0x3F, 0x3B); // #443f3b
         // Cream 18% over background — same role as BorderBrush in-app.
         public static readonly Color Border = Color.FromArgb(0x38, 0x33, 0x2C);
     }
@@ -148,6 +149,58 @@ public sealed class TrayManager : IDisposable
     private sealed class DarkMenuRenderer : ToolStripProfessionalRenderer
     {
         public DarkMenuRenderer() : base(new DarkColorTable()) { }
+
+        // Flat fills everywhere: no gradient code path left that could leak
+        // the default light-cyan selection rendering.
+        protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
+        {
+            if (e.Item.Selected)
+            {
+                using var brush = new System.Drawing.SolidBrush(DarkColors.Selection);
+                e.Graphics.FillRectangle(brush, new System.Drawing.Rectangle(System.Drawing.Point.Empty, e.Item.Size));
+            }
+            else
+            {
+                base.OnRenderMenuItemBackground(e);
+            }
+        }
+
+        protected override void OnRenderImageMargin(ToolStripRenderEventArgs e)
+        {
+            using var brush = new System.Drawing.SolidBrush(DarkColors.Background);
+            e.Graphics.FillRectangle(brush, e.AffectedBounds);
+        }
+
+        protected override void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e)
+        {
+            using var pen = new System.Drawing.Pen(DarkColors.Border);
+            int y = e.Item.Height / 2;
+            e.Graphics.DrawLine(pen, e.Item.ContentRectangle.Left, y, e.Item.ContentRectangle.Right, y);
+        }
+
+        protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e)
+        {
+            using var pen = new System.Drawing.Pen(DarkColors.Border);
+            e.Graphics.DrawRectangle(pen, new System.Drawing.Rectangle(0, 0, e.ToolStrip.Width - 1, e.ToolStrip.Height - 1));
+        }
+
+        // Hand-drawn check (font-independent): the default glyph color is
+        // unreadable on a dark check field.
+        protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e)
+        {
+            var r = e.ImageRectangle;
+            using var fill = new System.Drawing.SolidBrush(DarkColors.Selection);
+            e.Graphics.FillRectangle(fill, e.ImageRectangle);
+            r.Inflate(-4, -4);
+            e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            using var pen = new System.Drawing.Pen(DarkColors.Text, 2f);
+            e.Graphics.DrawLines(pen, new System.Drawing.Point[]
+            {
+                new(r.Left, r.Top + r.Height / 2),
+                new(r.Left + r.Width / 2 - 1, r.Bottom - 1),
+                new(r.Right, r.Top + 1),
+            });
+        }
     }
 
     private sealed class DarkColorTable : ProfessionalColorTable
