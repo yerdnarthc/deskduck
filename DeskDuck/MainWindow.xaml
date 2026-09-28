@@ -71,11 +71,30 @@
             <GroupBox Header="WHAT TO DUCK">
                 <StackPanel>
                     <Label Target="{Binding ElementName=TargetBox}" Content="Music app"/>
-                    <ComboBox x:Name="TargetBox" IsEditable="True"
-                              ItemsSource="{Binding AvailableApps}" DisplayMemberPath="Label"
-                              Text="{Binding TargetProcessName, UpdateSourceTrigger=LostFocus}"
-                              DropDownClosed="TargetBox_DropDownClosed"
-                              ToolTip="Process name of the music app, e.g. Spotify"/>
+            <ComboBox x:Name="TargetBox" IsEditable="True"
+                      ItemsSource="{Binding AvailableApps}"
+                      Text="{Binding TargetProcessName, UpdateSourceTrigger=LostFocus}"
+                      DropDownClosed="TargetBox_DropDownClosed"
+                      ToolTip="Process name of the music app, e.g. Spotify">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,6,0">
+                                <Image.Style>
+                                    <Style TargetType="Image">
+                                        <Style.Triggers>
+                                            <Trigger Property="Source" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Image.Style>
+                            </Image>
+                            <TextBlock Text="{Binding Label}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
                 </StackPanel>
             </GroupBox>
 
@@ -83,11 +102,26 @@
                 <StackPanel>
                     <ListBox ItemsSource="{Binding TriggerOptions}" MaxHeight="130" BorderThickness="1"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <CheckBox Content="{Binding Label}" IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"/>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}">
+                            <StackPanel Orientation="Horizontal">
+                                <Image Source="{Binding Icon}" Width="16" Height="16" Margin="0,0,6,0">
+                                    <Image.Style>
+                                        <Style TargetType="Image">
+                                            <Style.Triggers>
+                                                <Trigger Property="Source" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Image.Style>
+                                </Image>
+                                <TextBlock Text="{Binding Label}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </CheckBox>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
                     </ListBox>
                     <RadioButton Content="Session activity (any loudness)"
                                  IsChecked="{Binding IsActivityMode}" Margin="0,14,0,2"

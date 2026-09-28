@@ -224,6 +224,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         foreach (var s in snapshot) Sessions.Add(s);
 
         var discovered = _monitor.GetDiscoveredApps();
+        foreach (var app in discovered)
+            app.Icon = AppIconService.GetIcon(app.ExecutablePath);
         SyncAppsInPlace(discovered);
 
         SyncTriggerOptions(discovered);
@@ -267,6 +269,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             {
                 existing.DisplayName = d.DisplayName;
                 existing.HasActiveSession = d.HasActiveSession;
+                existing.ExecutablePath = d.ExecutablePath;
+                existing.Icon = d.Icon;
             }
         }
     }
@@ -317,8 +321,9 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             if (existing.Contains(name)) continue;
             labels.TryGetValue(name, out string? label);
+            var source = discovered.FirstOrDefault(d => ProcessNames.Matches(d.ProcessName, name));
             bool selected = Settings.TriggerProcesses.Contains(name, StringComparer.OrdinalIgnoreCase);
-            TriggerOptions.Add(new TriggerEntry(name, label ?? name, selected, OnTriggerToggled));
+            TriggerOptions.Add(new TriggerEntry(name, label ?? name, selected, OnTriggerToggled, source?.Icon));
         }
     }
 

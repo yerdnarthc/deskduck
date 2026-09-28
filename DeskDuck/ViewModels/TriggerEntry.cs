@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows.Media;
 using DeskDuck.Models;
 
 namespace DeskDuck.ViewModels;
@@ -13,6 +14,9 @@ public sealed class TriggerEntry : INotifyPropertyChanged
     public string ProcessName { get; }
     public string Label { get; }
 
+    /// <summary>App icon. Null = text only.</summary>
+    public ImageSource? Icon { get; }
+
     public bool IsSelected
     {
         get => _isSelected;
@@ -25,12 +29,13 @@ public sealed class TriggerEntry : INotifyPropertyChanged
         }
     }
 
-    public TriggerEntry(string processName, string label, bool selected, Action onChanged)
+    public TriggerEntry(string processName, string label, bool selected, Action onChanged, ImageSource? icon = null)
     {
         ProcessName = processName;
         Label = label;
         _isSelected = selected;
         _onChanged = onChanged;
+        Icon = icon;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
