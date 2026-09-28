@@ -40,6 +40,9 @@ public sealed class DuckEngine
     public string Reason { get; private set; } = string.Empty;
     public float CurrentVolume => _currentVolume;
 
+    /// <summary>Raw process names currently causing the duck (for diagnostics).</summary>
+    public IReadOnlyList<string> ActiveTriggers { get; private set; } = [];
+
     public event Action? Changed;
 
     public DuckEngine(Func<AppSettings> getSettings, VolumeController volume,
@@ -88,8 +91,9 @@ public sealed class DuckEngine
             SetState(DuckState.Normal, string.Empty);
 
         List<string> activeTriggers = ResolveTriggers(readings, settings);
+        ActiveTriggers = activeTriggers;
         bool shouldDuck = activeTriggers.Count > 0;
-        string reason = shouldDuck ? $"{string.Join(", ", activeTriggers)} is ACTIVE" : string.Empty;
+        string reason = shouldDuck ? BuildReason(readings, settings, activeTriggers) : string.Empty;
 
         if (shouldDuck)
         {
@@ -179,10 +183,22 @@ public sealed class DuckEngine
         // Drop apps that vanished entirely (e.g. process closed).
         _levelLatched.RemoveWhere(name => readings.All(r => r.Name != name));
 
+        // Raw names only — BuildReason adds the dB details for display.
         return readings
             .Where(r => _levelLatched.Contains(r.Name))
-            .Select(r => $"{r.Name} ({r.PeakDb:0} dB ≥ {settings.ThresholdDb:0} dB)")
+            .Select(r => r.Name)
             .ToList();
+    }
+
+    private static string BuildReason(
+        IReadOnlyList<TriggerReading> readings, AppSettings settings, List<string> active)
+    {
+        if (!string.Equals(settings.TriggerMode, "Level", StringComparison.OrdinalIgnoreCase))
+            return $"{string.Join(", ", active)} is ACTIVE";
+        var parts = readings
+            .Where(r => active.Contains(r.Name, StringComparer.OrdinalIgnoreCase))
+            .Select(r => $"{r.Name} ({r.PeakDb:0} dB ≥ {settings.ThresholdDb:0} dB)");
+        return string.Join(", ", parts);
     }
 
     /// <summary>
@@ -211,6 +227,7 @@ public sealed class DuckEngine
         _appliedSignature = string.Empty; // force re-assert, not needed but harmless
         _log($"Test Duck: {actual:0.00} -> ducking");
         StartRamp(actual.Value, DuckedVolume(), settings.AttackMilliseconds);
+        ActiveTriggers = []; // manual test isn't a trigger — clear stale highlights
         SetState(DuckState.Ducking, "manual test");
     }
 

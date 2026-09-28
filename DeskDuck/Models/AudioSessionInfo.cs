@@ -34,6 +34,20 @@ public sealed class AudioSessionInfo : INotifyPropertyChanged
 
     public string LevelText => $"{_levelDb:0} dB";
 
+    private bool _isCausingDuck;
+
+    /// <summary>True while this session is one of the active duck triggers.</summary>
+    public bool IsCausingDuck
+    {
+        get => _isCausingDuck;
+        set
+        {
+            if (_isCausingDuck == value) return;
+            _isCausingDuck = value;
+            OnPropertyChanged();
+        }
+    }
+
     public bool IsSystemSounds { get; init; }
     public bool IsTarget { get; set; }
     public bool IsConfiguredTrigger { get; set; }

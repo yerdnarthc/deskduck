@@ -44,6 +44,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             OnPropertyChanged(nameof(StatusText));
             OnPropertyChanged(nameof(Reason));
             OnPropertyChanged(nameof(TargetVolumeText));
+            UpdateCausingDuck();
         };
         _monitor.SessionsChanged += OnSessionsChanged;
         _monitor.MetersChanged += OnMetersChanged;
@@ -187,6 +188,23 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public string DeviceName => _monitor.DeviceName;
     public string TargetVolumeText => $"Target volume: {_engine.CurrentVolume:0%}";
 
+    public int SessionsCount => Sessions.Count;
+    public int LogCount => LogLines.Count;
+
+    public void ClearLog()
+    {
+        LogLines.Clear();
+        OnPropertyChanged(nameof(LogCount));
+    }
+
+    /// <summary>Flags rows currently causing the duck (highlighted in diagnostics).</summary>
+    private void UpdateCausingDuck()
+    {
+        var active = new HashSet<string>(_engine.ActiveTriggers, StringComparer.OrdinalIgnoreCase);
+        foreach (var row in Sessions)
+            row.IsCausingDuck = active.Contains(row.ProcessName);
+    }
+
     // ---- core reaction: any session/meter change re-evaluates the trigger ----
 
     private void OnSessionsChanged()
@@ -202,6 +220,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
         SyncTriggerOptions(discovered);
         OnPropertyChanged(nameof(DeviceName));
+        OnPropertyChanged(nameof(SessionsCount));
 
         RefreshEngine();
     }
@@ -316,6 +335,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             LogLines.Add($"[{DateTime.Now:HH:mm:ss}] {message}");
             while (LogLines.Count > 300) LogLines.RemoveAt(0);
+            OnPropertyChanged(nameof(LogCount));
         });
     }
 
