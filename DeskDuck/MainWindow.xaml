@@ -16,6 +16,7 @@
             <ComboBox x:Name="TargetBox" IsEditable="True"
                       ItemsSource="{Binding AvailableApps}" DisplayMemberPath="Label"
                       Text="{Binding TargetProcessName, UpdateSourceTrigger=LostFocus}"
+                      DropDownClosed="TargetBox_DropDownClosed"
                       ToolTip="Process name of the music app, e.g. Spotify"/>
 
             <Label Content="Trigger applications"/>
