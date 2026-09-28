@@ -409,5 +409,61 @@
             </Setter.Value>
         </Setter>
     </Style>
+    <!-- ============ Power toggle (primary app switch) ============ -->
+    <!-- A sliding switch reads as "the power control" where a checkbox   -->
+    <!-- reads as "just another option". Keyed (not implicit) so only the -->
+    <!-- master Enabled control gets this treatment. Space toggles it.    -->
+
+    <Style x:Key="PowerToggle" TargetType="CheckBox">
+        <Setter Property="Width" Value="56"/>
+        <Setter Property="Height" Value="30"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource AppFocusVisual}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <Border x:Name="Track" Width="56" Height="30" CornerRadius="15"
+                            Background="{StaticResource TrackBrush}">
+                        <Canvas>
+                            <Ellipse x:Name="Knob" Width="22" Height="22"
+                                     Canvas.Top="4" Canvas.Left="4"
+                                     Fill="{StaticResource FaintBrush}"/>
+                        </Canvas>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Track" Property="Background" Value="{StaticResource AccentBrush}"/>
+                            <Setter TargetName="Knob" Property="Fill" Value="{StaticResource TextBrush}"/>
+                            <Setter TargetName="Knob" Property="Canvas.Left" Value="30"/>
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Knob"
+                                                         Storyboard.TargetProperty="(Canvas.Left)"
+                                                         From="4" To="30" Duration="0:0:0.12"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Knob"
+                                                         Storyboard.TargetProperty="(Canvas.Left)"
+                                                         From="30" To="4" Duration="0:0:0.12"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Track" Property="Opacity" Value="0.85"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.4"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
 </ResourceDictionary>

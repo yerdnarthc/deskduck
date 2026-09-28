@@ -30,41 +30,52 @@
             <!-- Status hero: what the app is doing right now, at a glance. -->
             <Border Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="16">
                 <StackPanel>
-                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Ellipse Width="14" Height="14" Margin="0,0,8,0">
-                            <Ellipse.Style>
-                                <Style TargetType="Ellipse">
-                                    <Setter Property="Fill" Value="{StaticResource TextBrush}"/>
-                                    <Style.Triggers>
-                                        <!-- Amber for the whole duck cycle: the target is still
-                                             ducked through hold and release, not just while held. -->
-                                        <DataTrigger Binding="{Binding StatusText}" Value="DUCKED">
-                                            <Setter Property="Fill" Value="{StaticResource AccentBrush}"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding StatusText}" Value="DUCKING">
-                                            <Setter Property="Fill" Value="{StaticResource AccentBrush}"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding StatusText}" Value="HOLDING">
-                                            <Setter Property="Fill" Value="{StaticResource AccentBrush}"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding StatusText}" Value="RELEASING">
-                                            <Setter Property="Fill" Value="{StaticResource AccentBrush}"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding StatusText}" Value="DISABLED">
-                                            <Setter Property="Fill" Value="{StaticResource FaintBrush}"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Ellipse.Style>
-                        </Ellipse>
-                        <TextBlock Text="{Binding StatusText}" FontWeight="Bold" FontSize="20" VerticalAlignment="Center"/>
-                    </StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Ellipse Width="14" Height="14" Margin="0,0,8,0">
+                                <Ellipse.Style>
+                                    <Style TargetType="Ellipse">
+                                        <Setter Property="Fill" Value="{StaticResource TextBrush}"/>
+                                        <Style.Triggers>
+                                            <!-- Amber for the whole duck cycle: the target is still
+                                                 ducked through hold and release, not just while held. -->
+                                            <DataTrigger Binding="{Binding StatusText}" Value="DUCKED">
+                                                <Setter Property="Fill" Value="{StaticResource AccentBrush}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding StatusText}" Value="DUCKING">
+                                                <Setter Property="Fill" Value="{StaticResource AccentBrush}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding StatusText}" Value="HOLDING">
+                                                <Setter Property="Fill" Value="{StaticResource AccentBrush}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding StatusText}" Value="RELEASING">
+                                                <Setter Property="Fill" Value="{StaticResource AccentBrush}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding StatusText}" Value="DISABLED">
+                                                <Setter Property="Fill" Value="{StaticResource FaintBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Ellipse.Style>
+                            </Ellipse>
+                            <TextBlock Text="{Binding StatusText}" FontWeight="Bold" FontSize="20" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <!-- Primary toggle: top-right of the hero, impossible to miss. -->
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Enabled" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <CheckBox IsChecked="{Binding Enabled}" Style="{StaticResource PowerToggle}"
+                                      AutomationProperties.Name="Enable automatic ducking"
+                                      ToolTip="Master switch — when off, DeskDuck never changes the target volume"/>
+                        </StackPanel>
+                    </Grid>
                     <TextBlock Text="{Binding Reason}" Style="{StaticResource MutedText}" Margin="0,2,0,0"/>
                     <TextBlock Text="{Binding TargetVolumeText}" Style="{StaticResource MutedText}"/>
-            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                        <CheckBox Content="Enabled" IsChecked="{Binding Enabled}" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                        <Button Content="Test Duck" Command="{Binding TestDuckCommand}" Style="{StaticResource PrimaryButton}"/>
-                    </StackPanel>
+                    <Button Content="Test Duck" Command="{Binding TestDuckCommand}" Style="{StaticResource PrimaryButton}"
+                            HorizontalAlignment="Stretch" Margin="0,12,0,0"/>
                 </StackPanel>
             </Border>
 
