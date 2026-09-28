@@ -3,8 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:DeskDuck.Controls"
         mc:Ignorable="d"
-        Title="DeskDuck" Height="760" Width="440"
+        Title="DeskDuck" Height="860" Width="440"
         MinHeight="600" MinWidth="380">
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12">
         <StackPanel Orientation="Vertical">
@@ -44,23 +45,21 @@
             <Slider x:Name="DuckSlider" Minimum="1" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True"
                     Value="{Binding DuckFactorPercent, UpdateSourceTrigger=PropertyChanged}"/>
 
-            <Grid Margin="0,8,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition/><ColumnDefinition/><ColumnDefinition/>
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" Margin="0,0,4,0">
-                    <Label Target="{Binding ElementName=AttackBox}" Content="Attack (ms)"/>
-                    <TextBox x:Name="AttackBox" Text="{Binding AttackMilliseconds, UpdateSourceTrigger=LostFocus}" ToolTip="0–5000 ms"/>
-                </StackPanel>
-                <StackPanel Grid.Column="1" Margin="4,0,4,0">
-                    <Label Content="Hold (ms)" Target="{Binding ElementName=HoldBox}"/>
-                    <TextBox x:Name="HoldBox" Text="{Binding HoldMilliseconds, UpdateSourceTrigger=LostFocus}" ToolTip="0–10000 ms"/>
-                </StackPanel>
-                <StackPanel Grid.Column="2" Margin="4,0,0,0">
-                    <Label Content="Release (ms)" Target="{Binding ElementName=ReleaseBox}"/>
-                    <TextBox x:Name="ReleaseBox" Text="{Binding ReleaseMilliseconds, UpdateSourceTrigger=LostFocus}" ToolTip="0–10000 ms"/>
-                </StackPanel>
-            </Grid>
+            <UniformGrid Columns="3" Margin="0,8,0,0" Rows="1">
+                <controls:Knob Caption="Attack" Unit="ms" Minimum="0" Maximum="5000"
+                               Step="5" DefaultValue="100"
+                               Value="{Binding AttackMilliseconds, UpdateSourceTrigger=PropertyChanged}"
+                               ToolTip="Fade time into ducking. Drag, scroll, or use arrow keys; double-click resets to 100 ms."/>
+                <controls:Knob Caption="Hold" Unit="ms" Minimum="0" Maximum="10000"
+                               Step="10" DefaultValue="400"
+                               Value="{Binding HoldMilliseconds, UpdateSourceTrigger=PropertyChanged}"
+                               ToolTip="Wait after triggers go quiet before releasing. Double-click resets to 400 ms."/>
+                <controls:Knob Caption="Release" Unit="ms" Minimum="0" Maximum="10000"
+                               Step="10" DefaultValue="800"
+                               Value="{Binding ReleaseMilliseconds, UpdateSourceTrigger=PropertyChanged}"
+                               ToolTip="Fade time back to normal volume. Double-click resets to 800 ms."/>
+            </UniformGrid>
+            <TextBlock Text="Tip: hold Shift while dragging for fine control." Foreground="Gray" FontSize="11" HorizontalAlignment="Center"/>
 
             <StackPanel Orientation="Horizontal" Margin="0,12,0,0" VerticalAlignment="Center">
                 <Ellipse Width="12" Height="12" Margin="0,0,6,0">
