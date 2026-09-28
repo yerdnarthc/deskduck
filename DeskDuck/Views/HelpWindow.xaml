@@ -39,7 +39,9 @@
         </Style>
     </Window.Resources>
     <FlowDocumentScrollViewer VerticalScrollBarVisibility="Auto" Padding="20">
-        <FlowDocument>
+        <!-- FlowDocument does not inherit FontFamily/FontSize from the host
+             window (it carries its own defaults), so both are set here. -->
+        <FlowDocument FontFamily="{StaticResource AppFontFamily}" FontSize="13">
             <Paragraph Style="{StaticResource DocTitle}">DeskDuck User Guide</Paragraph>
             <Paragraph Style="{StaticResource DocSubtitle}">Everything the app does, in the order you meet it on screen.</Paragraph>
 
