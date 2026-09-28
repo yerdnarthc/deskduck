@@ -1,7 +1,7 @@
 <Window x:Class="DeskDuck.Views.LogWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Log" Height="320" Width="540"
+        Title="Log" Height="320" Width="650"
         MinHeight="220" MinWidth="400"
         Icon="../Assets/Icons/DeskDuck Logo (Transparent).png"
         ShowInTaskbar="False" WindowStartupLocation="CenterOwner"

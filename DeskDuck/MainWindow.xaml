@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:DeskDuck.Controls"
         mc:Ignorable="d"
-        Title="DeskDuck" Height="700" Width="440"
+        Title="DeskDuck" Height="1060" Width="550"
         MinHeight="560" MinWidth="380"
         Icon="Assets/Icons/DeskDuck Logo (Transparent).png"
         Background="{StaticResource AppBackgroundBrush}"
