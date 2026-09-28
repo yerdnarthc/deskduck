@@ -6,6 +6,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <!-- WinForms is referenced for NotifyIcon only (system tray); the UI stays 100% WPF. -->
+    <UseWindowsForms>true</UseWindowsForms>
     <ApplicationIcon>Assets\Icons\app.ico</ApplicationIcon>
   </PropertyGroup>
 
