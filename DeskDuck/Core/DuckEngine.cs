@@ -102,13 +102,15 @@ public sealed class DuckEngine
     }
 
     /// <summary>
-    /// Mirrors {pending, normal} into settings and marks persistence dirty.
-    /// Call on every mutation of the retained capture — never from ramps.
+    /// Mirrors the live capture into settings and marks persistence dirty.
+    /// Persists whenever a capture exists (duck in progress counts — a kill
+    /// or crash must still reconcile next run); clears only when the capture
+    /// genuinely completes. Call on every capture mutation — never from ramps.
     /// </summary>
     private void SyncPersistedCapture()
     {
         var settings = _getSettings();
-        if (_pendingRestore && _normalCaptured)
+        if (_normalCaptured)
         {
             settings.PendingRestoreVolume = _normalVolume;
             settings.PendingRestoreTarget = settings.TargetProcessName;
@@ -122,18 +124,29 @@ public sealed class DuckEngine
     }
 
     /// <summary>
-    /// Called on application exit: a capture alive at shutdown (e.g. exit
-    /// via tray mid-duck) becomes a pending restore for the next run.
+    /// Called on application exit. A live capture is restored immediately so
+    /// nothing is left ducked behind us; a missing target keeps the pending
+    /// path for the next run. Either way the disk ends consistent.
     /// </summary>
-    public void CaptureForShutdown()
+    public void RestoreForExit()
     {
         if (!_normalCaptured)
             return;
         var settings = _getSettings();
-        settings.PendingRestoreVolume = _normalVolume;
-        settings.PendingRestoreTarget = settings.TargetProcessName;
-        _pendingRestore = true;
-        _persistenceDirty = true;
+        if (_volume.GetTargetVolume(settings.TargetProcessName) is null)
+        {
+            _pendingRestore = true;
+            SyncPersistedCapture();
+            _log("Exiting with target missing — restore pending.");
+            return;
+        }
+        _volume.SetTargetVolume(settings.TargetProcessName, _normalVolume);
+        _currentVolume = _normalVolume;
+        _normalCaptured = false;
+        _pendingRestore = false;
+        _appliedSignature = string.Empty;
+        SyncPersistedCapture();
+        _log($"Restored {_normalVolume:0.00} on exit.");
     }
 
     /// <summary>
@@ -346,6 +359,7 @@ public sealed class DuckEngine
         _normalCaptured = true;
         _currentVolume = actual.Value;
         _appliedSignature = string.Empty; // force re-assert, not needed but harmless
+        SyncPersistedCapture();
         _log($"Test Duck: {actual:0.00} -> ducking");
         StartRamp(actual.Value, DuckedVolume(), settings.AttackMilliseconds);
         ActiveTriggers = []; // manual test isn't a trigger — clear stale highlights

@@ -386,10 +386,10 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public void Dispose()
     {
-        // A capture alive at shutdown (e.g. exit via tray mid-duck) becomes a
-        // pending restore for the next run; FlushEnginePersistence saves it.
+        // A capture alive at shutdown is restored on the spot if possible,
+        // else persisted as pending for the next run. Flush saves either way.
         // (All audio callbacks marshal to this thread, so no teardown race.)
-        _engine.CaptureForShutdown();
+        _engine.RestoreForExit();
         FlushEnginePersistence();
         _disposed = true;
         _monitor.Dispose();
