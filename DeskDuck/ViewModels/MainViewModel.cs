@@ -198,13 +198,49 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         foreach (var s in snapshot) Sessions.Add(s);
 
         var discovered = _monitor.GetDiscoveredApps();
-        AvailableApps.Clear();
-        foreach (var a in discovered) AvailableApps.Add(a);
+        SyncAppsInPlace(discovered);
 
         SyncTriggerOptions(discovered);
         OnPropertyChanged(nameof(DeviceName));
 
         RefreshEngine();
+    }
+
+    /// <summary>
+    /// Updates the dropdown list without ever rebuilding it: no Reset event,
+    /// stable item instances, so the editable ComboBox keeps its selection
+    /// and text even as sessions come and go. New items slot into sorted order.
+    /// </summary>
+    private void SyncAppsInPlace(List<DiscoveredApp> discovered)
+    {
+        for (int i = AvailableApps.Count - 1; i >= 0; i--)
+        {
+            if (discovered.All(d => !ProcessNames.Matches(d.ProcessName, AvailableApps[i].ProcessName)))
+                AvailableApps.RemoveAt(i);
+        }
+        foreach (var d in discovered)
+        {
+            var existing = AvailableApps.FirstOrDefault(a => ProcessNames.Matches(a.ProcessName, d.ProcessName));
+            if (existing is null)
+            {
+                int insertAt = AvailableApps.Count;
+                for (int i = 0; i < AvailableApps.Count; i++)
+                {
+                    if (string.Compare(AvailableApps[i].ProcessName, d.ProcessName,
+                            StringComparison.OrdinalIgnoreCase) > 0)
+                    {
+                        insertAt = i;
+                        break;
+                    }
+                }
+                AvailableApps.Insert(insertAt, d);
+            }
+            else
+            {
+                existing.DisplayName = d.DisplayName;
+                existing.HasActiveSession = d.HasActiveSession;
+            }
+        }
     }
 
     /// <summary>

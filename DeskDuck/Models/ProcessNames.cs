@@ -1,18 +1,50 @@
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+
 namespace DeskDuck.Models;
 
 /// <summary>
 /// One discoverable audio-producing application (grouped by process name).
 /// Used for the target dropdown and the trigger checklist.
+/// Instances are kept stable across refreshes (updated in place, never
+/// rebuilt) so ComboBox selection and edit text survive session changes.
 /// </summary>
-public sealed class DiscoveredApp
+public sealed class DiscoveredApp : INotifyPropertyChanged
 {
     public string ProcessName { get; init; } = string.Empty;
-    public string DisplayName { get; init; } = string.Empty;
-    public bool HasActiveSession { get; set; }
+
+    private string _displayName = string.Empty;
+    public string DisplayName
+    {
+        get => _displayName;
+        set
+        {
+            if (_displayName == value) return;
+            _displayName = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(Label));
+        }
+    }
+
+    private bool _hasActiveSession;
+    public bool HasActiveSession
+    {
+        get => _hasActiveSession;
+        set
+        {
+            if (_hasActiveSession == value) return;
+            _hasActiveSession = value;
+            OnPropertyChanged();
+        }
+    }
 
     public string Label => string.IsNullOrWhiteSpace(DisplayName) || DisplayName == ProcessName
         ? ProcessName
         : $"{DisplayName} ({ProcessName})";
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+    private void OnPropertyChanged([CallerMemberName] string? name = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 }
 
 /// <summary>
