@@ -172,7 +172,7 @@ public sealed class SessionMonitor : IDisposable
             lock (_gate)
             {
                 if (!_sessions.TryGetValue(instanceId, out var t)) return;
-                try { t.State = t.Control.State.ToString(); }
+                try { t.State = ToShortState(t.Control.State); }
                 catch { t.State = "Expired"; }
                 state = t.State;
                 name = t.ProcessName;
@@ -268,6 +268,17 @@ public sealed class SessionMonitor : IDisposable
     }
 
     /// <summary>
+    /// NAudio's enum members are named AudioSessionStateActive etc.;
+    /// map to the short names the rest of the app (and diagnostics) uses.
+    /// </summary>
+    internal static string ToShortState(AudioSessionState state) => state switch
+    {
+        AudioSessionState.AudioSessionStateActive => "Active",
+        AudioSessionState.AudioSessionStateExpired => "Expired",
+        _ => "Inactive",
+    };
+
+    /// <summary>
     /// One live session: owns the AudioSessionControl and forwards
     /// OnStateChanged to the monitor. Everything else is cached data.
     /// </summary>
@@ -306,7 +317,7 @@ public sealed class SessionMonitor : IDisposable
             }
             InstanceId = instanceId;
             ProcessId = pid;
-            State = state.ToString();
+            State = ToShortState(state);
             DisplayName = string.IsNullOrWhiteSpace(display) ? ResolveProcessName(pid) : display;
             ProcessName = ResolveProcessName(pid);
             try { Control.RegisterEventClient(this); } catch { /* session already dead */ }
