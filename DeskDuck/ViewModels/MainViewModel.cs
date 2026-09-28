@@ -46,6 +46,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             OnPropertyChanged(nameof(TargetVolumeText));
         };
         _monitor.SessionsChanged += OnSessionsChanged;
+        _monitor.MetersChanged += OnMetersChanged;
 
         TestDuckCommand = new RelayCommand(() => _engine.TestDuck());
 
@@ -145,7 +146,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public string DeviceName => _monitor.DeviceName;
     public string TargetVolumeText => $"Target volume: {_engine.CurrentVolume:0%}";
 
-    // ---- core reaction: any session change re-evaluates the trigger ----
+    // ---- core reaction: any session/meter change re-evaluates the trigger ----
 
     private void OnSessionsChanged()
     {
@@ -162,9 +163,30 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         SyncTriggerOptions(discovered);
         OnPropertyChanged(nameof(DeviceName));
 
-        var active = _monitor.GetActiveTriggers(Settings.TargetProcessName, Settings.TriggerProcesses);
-        string signature = string.Join("|", snapshot.Where(s => s.IsTarget).Select(s => s.SessionId));
-        _engine.Refresh(active, signature);
+        RefreshEngine();
+    }
+
+    /// <summary>
+    /// Meter tick (10x/sec): update dB readouts in place and re-evaluate.
+    /// No collection rebuild, no logging — only the engine decision runs.
+    /// </summary>
+    private void OnMetersChanged()
+    {
+        if (_disposed) return;
+        var levels = _monitor.GetLevels();
+        foreach (var row in Sessions)
+        {
+            if (levels.TryGetValue(row.SessionId, out double db))
+                row.LevelDb = db;
+        }
+        RefreshEngine();
+    }
+
+    private void RefreshEngine()
+    {
+        var readings = _monitor.GetTriggerReadings(Settings.TargetProcessName, Settings.TriggerProcesses);
+        string signature = string.Join("|", Sessions.Where(s => s.IsTarget).Select(s => s.SessionId));
+        _engine.Refresh(readings, signature);
     }
 
     /// <summary>Checklist = configured triggers ∪ currently discovered apps.</summary>
