@@ -16,6 +16,7 @@ namespace DeskDuck
         // toggle windows would be over-engineering for this codebase.
         private DiagnosticsWindow? _sessionsWindow;
         private LogWindow? _logWindow;
+        private HelpWindow? _helpWindow;
 
         public MainWindow(MainViewModel viewModel)
         {
@@ -62,6 +63,20 @@ namespace DeskDuck
             else
             {
                 _logWindow.Activate();
+            }
+        }
+
+        private void HelpButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_helpWindow is null)
+            {
+                _helpWindow = new HelpWindow { Owner = this };
+                _helpWindow.Closed += (_, _) => _helpWindow = null;
+                _helpWindow.Show();
+            }
+            else
+            {
+                _helpWindow.Activate();
             }
         }
 

@@ -17,15 +17,25 @@
     </Window.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20" Background="Transparent">
         <StackPanel Orientation="Vertical">
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,12" VerticalAlignment="Center">
-                <Image Source="Assets/Icons/DeskDuck Logo (Transparent).png" Width="46" Height="46"
-                       Margin="0,0,12,0" AutomationProperties.Name="DeskDuck logo"/>
-                <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="DeskDuck" FontSize="30" FontWeight="Bold"
-                               Foreground="{StaticResource AccentBrush}"/>
-                    <TextBlock Text="{Binding DeviceName, StringFormat='Output: {0}'}" Style="{StaticResource MutedText}"/>
+            <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Image Source="Assets/Icons/DeskDuck Logo (Transparent).png" Width="46" Height="46"
+                           Margin="0,0,12,0" AutomationProperties.Name="DeskDuck logo"/>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="DeskDuck" FontSize="30" FontWeight="Bold"
+                                   Foreground="{StaticResource AccentBrush}"/>
+                        <TextBlock Text="{Binding DeviceName, StringFormat='Output: {0}'}" Style="{StaticResource MutedText}"/>
+                    </StackPanel>
                 </StackPanel>
-            </StackPanel>
+                <Button Grid.Column="1" Content="?" Style="{StaticResource CircleButton}"
+                        VerticalAlignment="Center" Click="HelpButton_Click"
+                        AutomationProperties.Name="Help - how to use DeskDuck"
+                        ToolTip="How to use DeskDuck"/>
+            </Grid>
 
             <!-- Status hero: what the app is doing right now, at a glance. -->
             <Border Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="16">
