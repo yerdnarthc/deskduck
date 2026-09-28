@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:DeskDuck.Controls"
         mc:Ignorable="d"
-        Title="DeskDuck" Height="640" Width="440"
-        MinHeight="520" MinWidth="380"
+        Title="DeskDuck" Height="700" Width="440"
+        MinHeight="560" MinWidth="380"
         Icon="Assets/Icons/DeskDuck Logo (Transparent).png"
         Background="{StaticResource AppBackgroundBrush}"
         Foreground="{StaticResource TextBrush}"
@@ -15,20 +15,20 @@
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </Window.Resources>
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12" Background="Transparent">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="20" Background="Transparent">
         <StackPanel Orientation="Vertical">
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,8" VerticalAlignment="Center">
-                <Image Source="Assets/Icons/DeskDuck Logo (Transparent).png" Width="38" Height="38"
-                       Margin="0,0,10,0" AutomationProperties.Name="DeskDuck logo"/>
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,12" VerticalAlignment="Center">
+                <Image Source="Assets/Icons/DeskDuck Logo (Transparent).png" Width="46" Height="46"
+                       Margin="0,0,12,0" AutomationProperties.Name="DeskDuck logo"/>
                 <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="DeskDuck" FontSize="22" FontWeight="Bold"
+                    <TextBlock Text="DeskDuck" FontSize="30" FontWeight="Bold"
                                Foreground="{StaticResource AccentBrush}"/>
                     <TextBlock Text="{Binding DeviceName, StringFormat='Output: {0}'}" Style="{StaticResource MutedText}"/>
                 </StackPanel>
             </StackPanel>
 
             <!-- Status hero: what the app is doing right now, at a glance. -->
-            <Border Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="12"
+            <Border Background="{StaticResource SurfaceBrush}" CornerRadius="8" Padding="16"
                     BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
                 <StackPanel>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -56,11 +56,11 @@
                                 </Style>
                             </Ellipse.Style>
                         </Ellipse>
-                        <TextBlock Text="{Binding StatusText}" FontWeight="Bold" FontSize="18" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding StatusText}" FontWeight="Bold" FontSize="20" VerticalAlignment="Center"/>
                     </StackPanel>
                     <TextBlock Text="{Binding Reason}" Style="{StaticResource MutedText}" Margin="0,2,0,0"/>
                     <TextBlock Text="{Binding TargetVolumeText}" Style="{StaticResource MutedText}"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                         <CheckBox Content="Enabled" IsChecked="{Binding Enabled}" VerticalAlignment="Center" Margin="0,0,12,0"/>
                         <Button Content="Test Duck" Command="{Binding TestDuckCommand}" Style="{StaticResource PrimaryButton}"/>
                     </StackPanel>
@@ -80,7 +80,7 @@
 
             <GroupBox Header="WHEN TO DUCK">
                 <StackPanel>
-                    <ListBox ItemsSource="{Binding TriggerOptions}" MaxHeight="110" BorderThickness="1">
+                    <ListBox ItemsSource="{Binding TriggerOptions}" MaxHeight="130" BorderThickness="1">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <CheckBox Content="{Binding Label}" IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"/>
@@ -107,7 +107,7 @@
                     <Label Target="{Binding ElementName=DuckSlider}" Content="{Binding DuckFactorText, StringFormat='Duck to {0} of normal volume'}"/>
                     <Slider x:Name="DuckSlider" Minimum="1" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True"
                             Value="{Binding DuckFactorPercent, UpdateSourceTrigger=PropertyChanged}"/>
-                    <UniformGrid Columns="3" Margin="0,8,0,0" Rows="1">
+                    <UniformGrid Columns="3" Margin="0,12,0,0" Rows="1">
                         <controls:Knob Caption="Attack" Unit="ms" Minimum="0" Maximum="5000"
                                        Step="5" DefaultValue="100"
                                        Value="{Binding AttackMilliseconds, UpdateSourceTrigger=PropertyChanged}"
@@ -126,7 +126,7 @@
                 </StackPanel>
             </GroupBox>
 
-            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
                 <Button Content="{Binding SessionsCount, StringFormat='_Sessions ({0})'}"
                         Click="SessionsButton_Click" Margin="0,0,8,0"
                         ToolTip="Open the live audio-session monitor (Alt+S)"/>
