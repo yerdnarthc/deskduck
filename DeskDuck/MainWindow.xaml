@@ -3,10 +3,100 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:DeskDuck"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="DeskDuck" Height="760" Width="440"
+        MinHeight="600" MinWidth="380">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12">
+        <StackPanel Orientation="Vertical">
+            <TextBlock Text="DeskDuck" FontSize="20" FontWeight="Bold"/>
+            <TextBlock Text="{Binding DeviceName, StringFormat='Output: {0}'}" Foreground="Gray" Margin="0,0,0,8"/>
 
-    </Grid>
+            <Label Target="{Binding ElementName=TargetBox}" Content="Music application (duck target)"/>
+            <ComboBox x:Name="TargetBox" IsEditable="True"
+                      ItemsSource="{Binding AvailableApps}" DisplayMemberPath="Label"
+                      Text="{Binding TargetProcessName, UpdateSourceTrigger=LostFocus}"
+                      ToolTip="Process name of the music app, e.g. Spotify"/>
+
+            <Label Content="Trigger applications (duck while ACTIVE)"/>
+            <ListBox ItemsSource="{Binding TriggerOptions}" MaxHeight="120" BorderThickness="1">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <CheckBox Content="{Binding Label}" IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"/>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <Label Target="{Binding ElementName=DuckSlider}" Content="{Binding DuckFactorText, StringFormat='Duck to {0} of normal volume'}"/>
+            <Slider x:Name="DuckSlider" Minimum="5" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True"
+                    Value="{Binding DuckFactorPercent, UpdateSourceTrigger=PropertyChanged}"/>
+
+            <Grid Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/><ColumnDefinition/><ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                    <Label Target="{Binding ElementName=AttackBox}" Content="Attack (ms)"/>
+                    <TextBox x:Name="AttackBox" Text="{Binding AttackMilliseconds, UpdateSourceTrigger=LostFocus}" ToolTip="0–5000 ms"/>
+                </StackPanel>
+                <StackPanel Grid.Column="1" Margin="4,0,4,0">
+                    <Label Content="Hold (ms)" Target="{Binding ElementName=HoldBox}"/>
+                    <TextBox x:Name="HoldBox" Text="{Binding HoldMilliseconds, UpdateSourceTrigger=LostFocus}" ToolTip="0–10000 ms"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Margin="4,0,0,0">
+                    <Label Content="Release (ms)" Target="{Binding ElementName=ReleaseBox}"/>
+                    <TextBox x:Name="ReleaseBox" Text="{Binding ReleaseMilliseconds, UpdateSourceTrigger=LostFocus}" ToolTip="0–10000 ms"/>
+                </StackPanel>
+            </Grid>
+
+            <StackPanel Orientation="Horizontal" Margin="0,12,0,0" VerticalAlignment="Center">
+                <Ellipse Width="12" Height="12" Margin="0,0,6,0">
+                    <Ellipse.Style>
+                        <Style TargetType="Ellipse">
+                            <Setter Property="Fill" Value="Green"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding StatusText}" Value="DUCKED">
+                                    <Setter Property="Fill" Value="Orange"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding StatusText}" Value="DUCKING">
+                                    <Setter Property="Fill" Value="Orange"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding StatusText}" Value="HOLDING">
+                                    <Setter Property="Fill" Value="DodgerBlue"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding StatusText}" Value="RELEASING">
+                                    <Setter Property="Fill" Value="DodgerBlue"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding StatusText}" Value="DISABLED">
+                                    <Setter Property="Fill" Value="Gray"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Ellipse.Style>
+                </Ellipse>
+                <TextBlock Text="{Binding StatusText}" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding TargetVolumeText}" Margin="8,0,0,0" Foreground="Gray" VerticalAlignment="Center"/>
+            </StackPanel>
+            <TextBlock Text="{Binding Reason}" FontStyle="Italic" Foreground="Gray" TextWrapping="Wrap"/>
+
+            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                <CheckBox Content="Enabled" IsChecked="{Binding Enabled}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                <Button Content="Test Duck" Command="{Binding TestDuckCommand}" Padding="12,4"/>
+            </StackPanel>
+
+            <Label Content="Live audio sessions" Margin="0,8,0,0" FontWeight="Bold"/>
+            <ListView ItemsSource="{Binding Sessions}" Height="150">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Application" Width="150" DisplayMemberBinding="{Binding ProcessName}"/>
+                        <GridViewColumn Header="PID" Width="55" DisplayMemberBinding="{Binding ProcessId}"/>
+                        <GridViewColumn Header="State" Width="70" DisplayMemberBinding="{Binding State}"/>
+                        <GridViewColumn Header="Role" Width="70" DisplayMemberBinding="{Binding Role}"/>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+
+            <Label Content="Log" Margin="0,8,0,0" FontWeight="Bold"/>
+            <ListBox ItemsSource="{Binding LogLines}" Height="120" FontFamily="Consolas" FontSize="11"/>
+        </StackPanel>
+    </ScrollViewer>
 </Window>
