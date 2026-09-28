@@ -1,0 +1,239 @@
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+using System.Windows.Threading;
+using DeskDuck.Audio;
+using DeskDuck.Core;
+using DeskDuck.Models;
+using DeskDuck.Services;
+
+namespace DeskDuck.ViewModels;
+
+/// <summary>
+/// Bridges services and the WPF UI. All NAudio callbacks already arrive on
+/// the UI thread (SessionMonitor marshals them), as do the engine timers,
+/// so no extra thread-switching is needed here.
+/// </summary>
+public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
+{
+    private readonly SessionMonitor _monitor;
+    private readonly VolumeController _volume = new();
+    private readonly DuckEngine _engine;
+    private readonly SettingsService _settingsService = new();
+    private readonly Dispatcher _dispatcher;
+    private bool _disposed;
+
+    public AppSettings Settings { get; }
+
+    public ObservableCollection<AudioSessionInfo> Sessions { get; } = new();
+    public ObservableCollection<DiscoveredApp> AvailableApps { get; } = new();
+    public ObservableCollection<TriggerEntry> TriggerOptions { get; } = new();
+    public ObservableCollection<string> LogLines { get; } = new();
+
+    public RelayCommand TestDuckCommand { get; }
+
+    public MainViewModel(Dispatcher dispatcher)
+    {
+        _dispatcher = dispatcher;
+        Settings = _settingsService.Load();
+
+        _monitor = new SessionMonitor(dispatcher, Log);
+        _engine = new DuckEngine(() => Settings, _volume, dispatcher, Log);
+        _engine.Changed += () =>
+        {
+            OnPropertyChanged(nameof(StatusText));
+            OnPropertyChanged(nameof(Reason));
+            OnPropertyChanged(nameof(TargetVolumeText));
+        };
+        _monitor.SessionsChanged += OnSessionsChanged;
+
+        TestDuckCommand = new RelayCommand(() => _engine.TestDuck());
+
+        _monitor.Start();
+        OnSessionsChanged(); // initial paint
+        Log($"Settings: {Settings.TargetProcessName} | duck {Settings.DuckFactor:0%} | " +
+            $"A{Settings.AttackMilliseconds}/H{Settings.HoldMilliseconds}/R{Settings.ReleaseMilliseconds}ms");
+    }
+
+    // ---- bindable settings (validated, auto-saved) ----
+
+    public bool Enabled
+    {
+        get => Settings.Enabled;
+        set
+        {
+            if (Settings.Enabled == value) return;
+            Settings.Enabled = value;
+            SaveAndRefresh();
+            OnPropertyChanged();
+        }
+    }
+
+    public string TargetProcessName
+    {
+        get => Settings.TargetProcessName;
+        set
+        {
+            string normalized = ProcessNames.Normalize(value);
+            if (ProcessNames.Matches(Settings.TargetProcessName, normalized)) return;
+            Settings.TargetProcessName = string.IsNullOrWhiteSpace(normalized) ? "Spotify" : normalized;
+            SaveAndRefresh();
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>Duck factor as 5–100 for the slider.</summary>
+    public int DuckFactorPercent
+    {
+        get => (int)Math.Round(Settings.DuckFactor * 100);
+        set
+        {
+            value = Math.Clamp(value, 5, 100);
+            if (DuckFactorPercent == value) return;
+            Settings.DuckFactor = value / 100.0;
+            SaveAndRefresh();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(DuckFactorText));
+        }
+    }
+
+    public string DuckFactorText => $"{DuckFactorPercent}%";
+
+    public int AttackMilliseconds
+    {
+        get => Settings.AttackMilliseconds;
+        set
+        {
+            value = Math.Clamp(value, 0, 5000);
+            if (Settings.AttackMilliseconds == value) return;
+            Settings.AttackMilliseconds = value;
+            SaveAndRefresh();
+            OnPropertyChanged();
+        }
+    }
+
+    public int HoldMilliseconds
+    {
+        get => Settings.HoldMilliseconds;
+        set
+        {
+            value = Math.Clamp(value, 0, 10000);
+            if (Settings.HoldMilliseconds == value) return;
+            Settings.HoldMilliseconds = value;
+            SaveAndRefresh();
+            OnPropertyChanged();
+        }
+    }
+
+    public int ReleaseMilliseconds
+    {
+        get => Settings.ReleaseMilliseconds;
+        set
+        {
+            value = Math.Clamp(value, 0, 10000);
+            if (Settings.ReleaseMilliseconds == value) return;
+            Settings.ReleaseMilliseconds = value;
+            SaveAndRefresh();
+            OnPropertyChanged();
+        }
+    }
+
+    // ---- status ----
+
+    public string StatusText => _engine.State.ToString().ToUpperInvariant();
+    public string Reason => _engine.Reason;
+    public string DeviceName => _monitor.DeviceName;
+    public string TargetVolumeText => $"Target volume: {_engine.CurrentVolume:0%}";
+
+    // ---- core reaction: any session change re-evaluates the trigger ----
+
+    private void OnSessionsChanged()
+    {
+        if (_disposed) return;
+        var snapshot = _monitor.GetSnapshot(Settings.TargetProcessName, Settings.TriggerProcesses);
+
+        Sessions.Clear();
+        foreach (var s in snapshot) Sessions.Add(s);
+
+        var discovered = _monitor.GetDiscoveredApps();
+        AvailableApps.Clear();
+        foreach (var a in discovered) AvailableApps.Add(a);
+
+        SyncTriggerOptions(discovered);
+        OnPropertyChanged(nameof(DeviceName));
+
+        var active = _monitor.GetActiveTriggers(Settings.TargetProcessName, Settings.TriggerProcesses);
+        string signature = string.Join("|", snapshot.Where(s => s.IsTarget).Select(s => s.SessionId));
+        _engine.Refresh(active, signature);
+    }
+
+    /// <summary>Checklist = configured triggers ∪ currently discovered apps.</summary>
+    private void SyncTriggerOptions(List<DiscoveredApp> discovered)
+    {
+        var labels = discovered.ToDictionary(d => d.ProcessName, d => d.Label,
+            StringComparer.OrdinalIgnoreCase);
+        var names = Settings.TriggerProcesses
+            .Concat(discovered.Select(d => d.ProcessName))
+            .Select(ProcessNames.Normalize)
+            .Where(n => !string.IsNullOrEmpty(n))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        for (int i = TriggerOptions.Count - 1; i >= 0; i--)
+            if (!names.Contains(TriggerOptions[i].ProcessName, StringComparer.OrdinalIgnoreCase))
+                TriggerOptions.RemoveAt(i);
+
+        var existing = new HashSet<string>(
+            TriggerOptions.Select(t => t.ProcessName), StringComparer.OrdinalIgnoreCase);
+        foreach (string name in names)
+        {
+            if (existing.Contains(name)) continue;
+            labels.TryGetValue(name, out string? label);
+            bool selected = Settings.TriggerProcesses.Contains(name, StringComparer.OrdinalIgnoreCase);
+            TriggerOptions.Add(new TriggerEntry(name, label ?? name, selected, OnTriggerToggled));
+        }
+    }
+
+    private void OnTriggerToggled()
+    {
+        Settings.TriggerProcesses = TriggerOptions
+            .Where(t => t.IsSelected)
+            .Select(t => t.ProcessName)
+            .ToList();
+        SaveAndRefresh();
+    }
+
+    private void SaveAndRefresh()
+    {
+        Settings.Normalize();
+        _settingsService.Save(Settings);
+        OnSessionsChanged();
+    }
+
+    private void Log(string message)
+    {
+        RunOnUi(() =>
+        {
+            LogLines.Add($"[{DateTime.Now:HH:mm:ss}] {message}");
+            while (LogLines.Count > 300) LogLines.RemoveAt(0);
+        });
+    }
+
+    private void RunOnUi(Action action)
+    {
+        if (_dispatcher.CheckAccess()) action();
+        else _dispatcher.BeginInvoke(action);
+    }
+
+    public void Dispose()
+    {
+        _disposed = true;
+        _monitor.Dispose();
+        _volume.Dispose();
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+    private void OnPropertyChanged([CallerMemberName] string? name = null) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+}
