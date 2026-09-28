@@ -1,6 +1,9 @@
 ﻿using System.Windows;
 using System.Windows.Media;
 using DeskDuck.ViewModels;
+// WinForms implicit usings collide on these names; WPF wins in this file.
+using Application = System.Windows.Application;
+using FontFamily = System.Windows.Media.FontFamily;
 
 namespace DeskDuck
 {
@@ -18,6 +21,8 @@ namespace DeskDuck
             _viewModel = new MainViewModel(Dispatcher);
             MainWindow = new MainWindow(_viewModel);
             MainWindow.Show();
+            ((MainWindow)MainWindow).AttachTray(_viewModel);
+            SessionEnding += (_, _) => (MainWindow as MainWindow)?.RequestRealExit();
         }
 
         /// <summary>
@@ -47,6 +52,7 @@ namespace DeskDuck
 
         protected override void OnExit(ExitEventArgs e)
         {
+            (MainWindow as MainWindow)?.DetachTray();
             _viewModel?.Dispose();
             base.OnExit(e);
         }

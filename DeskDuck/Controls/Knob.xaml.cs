@@ -2,6 +2,15 @@ using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Input;
 using System.Windows.Media;
+// WinForms implicit usings collide on these names; WPF wins in this file.
+using Point = System.Windows.Point;
+using Color = System.Windows.Media.Color;
+using Brush = System.Windows.Media.Brush;
+using MouseEventArgs = System.Windows.Input.MouseEventArgs;
+using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+using Size = System.Windows.Size;
+using Pen = System.Windows.Media.Pen;
+using Application = System.Windows.Application;
 
 namespace DeskDuck.Controls;
 
