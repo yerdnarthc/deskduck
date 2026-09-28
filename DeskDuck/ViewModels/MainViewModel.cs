@@ -84,13 +84,13 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         }
     }
 
-    /// <summary>Duck factor as 5–100 for the slider.</summary>
+    /// <summary>Duck factor as 1–100 for the slider.</summary>
     public int DuckFactorPercent
     {
         get => (int)Math.Round(Settings.DuckFactor * 100);
         set
         {
-            value = Math.Clamp(value, 5, 100);
+            value = Math.Clamp(value, 1, 100);
             if (DuckFactorPercent == value) return;
             Settings.DuckFactor = value / 100.0;
             SaveAndRefresh();

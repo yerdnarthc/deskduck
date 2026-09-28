@@ -41,7 +41,7 @@
             </GroupBox>
 
             <Label Target="{Binding ElementName=DuckSlider}" Content="{Binding DuckFactorText, StringFormat='Duck to {0} of normal volume'}"/>
-            <Slider x:Name="DuckSlider" Minimum="5" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True"
+            <Slider x:Name="DuckSlider" Minimum="1" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True"
                     Value="{Binding DuckFactorPercent, UpdateSourceTrigger=PropertyChanged}"/>
 
             <Grid Margin="0,8,0,0">
