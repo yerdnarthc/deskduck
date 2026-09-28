@@ -37,6 +37,8 @@
                                 <Style TargetType="Ellipse">
                                     <Setter Property="Fill" Value="{StaticResource TextBrush}"/>
                                     <Style.Triggers>
+                                        <!-- Amber for the whole duck cycle: the target is still
+                                             ducked through hold and release, not just while held. -->
                                         <DataTrigger Binding="{Binding StatusText}" Value="DUCKED">
                                             <Setter Property="Fill" Value="{StaticResource AccentBrush}"/>
                                         </DataTrigger>
@@ -44,10 +46,10 @@
                                             <Setter Property="Fill" Value="{StaticResource AccentBrush}"/>
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding StatusText}" Value="HOLDING">
-                                            <Setter Property="Fill" Value="{StaticResource MutedBrush}"/>
+                                            <Setter Property="Fill" Value="{StaticResource AccentBrush}"/>
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding StatusText}" Value="RELEASING">
-                                            <Setter Property="Fill" Value="{StaticResource MutedBrush}"/>
+                                            <Setter Property="Fill" Value="{StaticResource AccentBrush}"/>
                                         </DataTrigger>
                                         <DataTrigger Binding="{Binding StatusText}" Value="DISABLED">
                                             <Setter Property="Fill" Value="{StaticResource FaintBrush}"/>
