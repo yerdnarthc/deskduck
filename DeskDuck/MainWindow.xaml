@@ -46,7 +46,7 @@
                         </Ellipse>
                         <TextBlock Text="{Binding StatusText}" FontWeight="Bold" FontSize="18" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <TextBlock Text="{Binding Reason}" Style="{StaticResource MutedText}" Margin="0,2,0,0}"/>
+                    <TextBlock Text="{Binding Reason}" Style="{StaticResource MutedText}" Margin="0,2,0,0"/>
                     <TextBlock Text="{Binding TargetVolumeText}" Style="{StaticResource MutedText}"/>
                     <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                         <CheckBox Content="Enabled" IsChecked="{Binding Enabled}" VerticalAlignment="Center" Margin="0,0,12,0"/>
