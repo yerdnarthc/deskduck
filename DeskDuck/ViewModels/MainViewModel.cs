@@ -302,6 +302,19 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         var readings = _monitor.GetTriggerReadings(Settings.TargetProcessName, Settings.TriggerProcesses);
         string signature = string.Join("|", Sessions.Where(s => s.IsTarget).Select(s => s.SessionId));
         _engine.Refresh(readings, signature);
+        FlushEnginePersistence();
+    }
+
+    /// <summary>
+    /// Persists the engine's pending-restore capture, but only when it changed
+    /// (volume ramps never mark dirty, so the 10 Hz ticks stay IO-free).
+    /// </summary>
+    private void FlushEnginePersistence()
+    {
+        if (_disposed || !_engine.ConsumePersistenceDirty())
+            return;
+        Settings.Normalize();
+        _settingsService.Save(Settings);
     }
 
     /// <summary>
@@ -373,6 +386,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public void Dispose()
     {
+        // A capture alive at shutdown (e.g. exit via tray mid-duck) becomes a
+        // pending restore for the next run; FlushEnginePersistence saves it.
+        // (All audio callbacks marshal to this thread, so no teardown race.)
+        _engine.CaptureForShutdown();
+        FlushEnginePersistence();
         _disposed = true;
         _monitor.Dispose();
         _volume.Dispose();
