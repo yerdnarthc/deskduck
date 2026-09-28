@@ -208,9 +208,9 @@ public sealed class DialDisplay : FrameworkElement
         // Theme-aware: pull token brushes so the dial follows Styles.xaml.
         // Hardcoded fallbacks keep the control usable without the dictionary.
         Brush trackBrush = enabled ? FindBrush("TrackBrush", Color.FromRgb(0xD4, 0xD4, 0xD4)) : FindBrush("FaintBrush", Colors.Gray);
-        Brush accentBrush = enabled ? FindBrush("AccentBrush", Color.FromRgb(0xEB, 0x7D, 0x00)) : FindBrush("FaintBrush", Colors.Gray);
+        Brush accentBrush = enabled ? FindBrush("AccentBrush", Color.FromRgb(0xFA, 0xAC, 0x43)) : FindBrush("FaintBrush", Colors.Gray);
         Brush tickBrush = enabled ? FindBrush("FaintBrush", Color.FromRgb(0xA6, 0xA6, 0xA6)) : FindBrush("FaintBrush", Colors.Gray);
-        Brush needleBrush = enabled ? FindBrush("CreamBrush", Color.FromRgb(0x33, 0x33, 0x33)) : FindBrush("FaintBrush", Colors.Gray);
+        Brush needleBrush = enabled ? FindBrush("TextBrush", Color.FromRgb(0xDF, 0xDC, 0xDC)) : FindBrush("FaintBrush", Colors.Gray);
 
         // Ticks: 11 positions, major every 5th.
         for (int i = 0; i <= 10; i++)

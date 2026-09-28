@@ -2,29 +2,29 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <!-- ============ DeskDuck palette → semantic tokens ============ -->
-    <!-- Background #2E2910 · Surface #2C5745 · Text #EBE3A7 · Accent #EB7D00 -->
-    <!-- Contrast (computed): cream-on-bg 11.2 · cream-on-surface 6.3 ·      -->
-    <!-- orange-on-bg 5.2 (accents only) · orange-on-cream 2.2 (never text). -->
+    <!-- Moodboard: bg #141413 · surface #443f3b · text #dfdcdc ·       -->
+    <!-- accent #faac43. Contrast (computed): text-on-bg 13.5 ·        -->
+    <!-- text-on-surface 7.6 · accent-on-bg 9.7 · accent-on-text 1.4    -->
+    <!-- (never amber on light). Muted 80% clears 4.5:1 everywhere.    -->
 
-    <Color x:Key="AppBackgroundColor">#2E2910</Color>
-    <Color x:Key="SurfaceColor">#2C5745</Color>
-    <Color x:Key="CreamColor">#EBE3A7</Color>
-    <Color x:Key="AccentColor">#EB7D00</Color>
+    <Color x:Key="AppBackgroundColor">#141413</Color>
+    <Color x:Key="SurfaceColor">#443f3b</Color>
+    <Color x:Key="TextColor">#dfdcdc</Color>
+    <Color x:Key="AccentColor">#faac43</Color>
 
     <SolidColorBrush x:Key="AppBackgroundBrush" Color="{StaticResource AppBackgroundColor}"/>
     <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}"/>
-    <SolidColorBrush x:Key="CreamBrush" Color="{StaticResource CreamColor}"/>
+    <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}"/>
     <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
     <SolidColorBrush x:Key="AccentTextBrush" Color="{StaticResource AppBackgroundColor}"/>
 
     <!-- Opacity steps of the palette — no new hues introduced. -->
-    <!-- Muted is 80% (not 60%) so it still clears 4.5:1 on surface cards. -->
-    <SolidColorBrush x:Key="MutedBrush" Color="{StaticResource CreamColor}" Opacity="0.8"/>
-    <SolidColorBrush x:Key="FaintBrush" Color="{StaticResource CreamColor}" Opacity="0.35"/>
-    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource CreamColor}" Opacity="0.18"/>
-    <SolidColorBrush x:Key="TrackBrush" Color="{StaticResource CreamColor}" Opacity="0.22"/>
+    <SolidColorBrush x:Key="MutedBrush" Color="{StaticResource TextColor}" Opacity="0.8"/>
+    <SolidColorBrush x:Key="FaintBrush" Color="{StaticResource TextColor}" Opacity="0.35"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource TextColor}" Opacity="0.18"/>
+    <SolidColorBrush x:Key="TrackBrush" Color="{StaticResource TextColor}" Opacity="0.22"/>
     <SolidColorBrush x:Key="AccentSoftBrush" Color="{StaticResource AccentColor}" Opacity="0.28"/>
-    <SolidColorBrush x:Key="HoverBrush" Color="{StaticResource CreamColor}" Opacity="0.1"/>
+    <SolidColorBrush x:Key="HoverBrush" Color="{StaticResource TextColor}" Opacity="0.1"/>
 
     <!-- Visible keyboard focus on the dark background (never remove). -->
     <Style x:Key="AppFocusVisual">
@@ -42,21 +42,24 @@
 
     <Style TargetType="Window">
         <Setter Property="Background" Value="{StaticResource AppBackgroundBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource CreamBrush}"/>
-        <Setter Property="FontFamily" Value="Segoe UI"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <!-- Bundled brand font (Resource build action), Segoe UI fallback.
+             Space Mono ships Regular/Bold only — always use Bold, never
+             SemiBold (WPF would pick an unpredictable synthetic weight). -->
+        <Setter Property="FontFamily" Value="/Assets/Fonts/#Space Mono, Segoe UI"/>
         <Setter Property="FontSize" Value="13"/>
     </Style>
 
     <Style TargetType="Label">
-        <Setter Property="Foreground" Value="{StaticResource CreamBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Padding" Value="0,0,0,2"/>
     </Style>
 
     <Style x:Key="SectionTitle" TargetType="TextBlock">
-        <Setter Property="Foreground" Value="{StaticResource CreamBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
         <Setter Property="FontSize" Value="13"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="Margin" Value="0,0,0,4"/>
     </Style>
 
@@ -68,7 +71,7 @@
 
     <Style TargetType="ToolTip">
         <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource CreamBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
         <Setter Property="Padding" Value="8,4"/>
     </Style>
@@ -76,8 +79,8 @@
     <Style TargetType="GroupBox">
         <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource CreamBrush}"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="Padding" Value="8,6"/>
         <Setter Property="Margin" Value="0,8,0,0"/>
@@ -89,11 +92,11 @@
     <!-- Default (secondary) button: transparent with cream outline. -->
     <Style TargetType="Button">
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{StaticResource CreamBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="16,8"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="Cursor" Value="Hand"/>
         <Setter Property="FocusVisualStyle" Value="{StaticResource AppFocusVisual}"/>
         <Setter Property="Template">
@@ -134,22 +137,22 @@
     <!-- ============ Inputs ============ -->
 
     <Style TargetType="CheckBox">
-        <Setter Property="Foreground" Value="{StaticResource CreamBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
         <Setter Property="Margin" Value="0,2"/>
         <Setter Property="FocusVisualStyle" Value="{StaticResource AppFocusVisual}"/>
     </Style>
 
     <Style TargetType="RadioButton">
-        <Setter Property="Foreground" Value="{StaticResource CreamBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
         <Setter Property="Margin" Value="0,2"/>
         <Setter Property="FocusVisualStyle" Value="{StaticResource AppFocusVisual}"/>
     </Style>
 
     <Style TargetType="TextBox">
         <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource CreamBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
-        <Setter Property="CaretBrush" Value="{StaticResource CreamBrush}"/>
+        <Setter Property="CaretBrush" Value="{StaticResource TextBrush}"/>
         <Setter Property="SelectionBrush" Value="{StaticResource AccentSoftBrush}"/>
         <Setter Property="Padding" Value="6,4"/>
         <Setter Property="FocusVisualStyle" Value="{StaticResource AppFocusVisual}"/>
@@ -159,7 +162,7 @@
          which is the only way DeskDuck uses it.) -->
     <Style TargetType="ComboBox">
         <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource CreamBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
         <Setter Property="Padding" Value="6,4"/>
         <Setter Property="Cursor" Value="Hand"/>
@@ -185,7 +188,7 @@
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
                                     <Border Background="Transparent">
-                                        <Path Data="M 0 0 L 4 4 L 8 0" Stroke="{StaticResource CreamBrush}"
+                                        <Path Data="M 0 0 L 4 4 L 8 0" Stroke="{StaticResource TextBrush}"
                                               StrokeThickness="1.5" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
                                 </ControlTemplate>
@@ -212,7 +215,7 @@
     </Style>
 
     <Style TargetType="ComboBoxItem">
-        <Setter Property="Foreground" Value="{StaticResource CreamBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
         <Setter Property="Padding" Value="8,4"/>
         <Setter Property="Template">
             <Setter.Value>
@@ -237,14 +240,14 @@
 
     <Style TargetType="ListBox">
         <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource CreamBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
         <Setter Property="Padding" Value="4"/>
         <Setter Property="FocusVisualStyle" Value="{StaticResource AppFocusVisual}"/>
     </Style>
 
     <Style TargetType="ListBoxItem">
-        <Setter Property="Foreground" Value="{StaticResource CreamBrush}"/>
+        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
         <Setter Property="Padding" Value="4,2"/>
         <Setter Property="Template">
             <Setter.Value>
@@ -275,7 +278,7 @@
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{StaticResource MutedBrush}"/>
         <Setter Property="FontSize" Value="11"/>
-        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Padding" Value="6,2"/>
     </Style>
@@ -317,10 +320,10 @@
                                                      Stroke="{StaticResource AppBackgroundBrush}" StrokeThickness="2"/>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="Dot" Property="Stroke" Value="{StaticResource CreamBrush}"/>
+                                                    <Setter TargetName="Dot" Property="Stroke" Value="{StaticResource TextBrush}"/>
                                                 </Trigger>
                                                 <Trigger Property="IsDragging" Value="True">
-                                                    <Setter TargetName="Dot" Property="Stroke" Value="{StaticResource CreamBrush}"/>
+                                                    <Setter TargetName="Dot" Property="Stroke" Value="{StaticResource TextBrush}"/>
                                                 </Trigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>
