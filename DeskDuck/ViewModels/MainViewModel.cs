@@ -304,7 +304,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _engine.Refresh(readings, signature);
     }
 
-    /// <summary>Checklist = configured triggers ∪ currently discovered apps.</summary>
+    /// <summary>
+    /// Checklist = configured triggers ∪ currently discovered apps, minus the
+    /// target itself. The target can never be its own trigger (the engine
+    /// ignores it), so offering it as a choice only invites confusion.
+    /// </summary>
     private void SyncTriggerOptions(List<DiscoveredApp> discovered)
     {
         var labels = discovered.ToDictionary(d => d.ProcessName, d => d.Label,
@@ -313,6 +317,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             .Concat(discovered.Select(d => d.ProcessName))
             .Select(ProcessNames.Normalize)
             .Where(n => !string.IsNullOrEmpty(n))
+            .Where(n => !ProcessNames.Matches(n, Settings.TargetProcessName))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
             .ToList();

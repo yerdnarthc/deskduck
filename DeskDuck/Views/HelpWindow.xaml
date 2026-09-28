@@ -52,7 +52,7 @@
             <List MarkerStyle="Decimal">
                 <ListItem><Paragraph><Bold>WHAT TO DUCK:</Bold> pick your music app (usually Spotify).</Paragraph></ListItem>
                 <ListItem><Paragraph><Bold>WHEN TO DUCK:</Bold> tick the apps that should dip your music, like your music software, game engine, or browser.</Paragraph></ListItem>
-                <ListItem><Paragraph>Flip the <Bold>Enabled</Bold> switch on. Done.</Paragraph></ListItem>
+                <ListItem><Paragraph>Flip the <Bold>Enabled</Bold> switch on.</Paragraph></ListItem>
             </List>
 
             <Paragraph Style="{StaticResource DocH1}">3. What to duck</Paragraph>
