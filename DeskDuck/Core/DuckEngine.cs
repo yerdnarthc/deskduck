@@ -1,0 +1,311 @@
+using System.Windows.Threading;
+using DeskDuck.Audio;
+using DeskDuck.Models;
+
+namespace DeskDuck.Core;
+
+/// <summary>
+/// Deterministic ducking state machine driven by one aggregate signal:
+/// "at least one configured trigger session is ACTIVE".
+/// Attack/hold/release timings are read fresh from settings on every use.
+/// The captured normal volume is never overwritten while ducked, so
+/// restoring always returns to the pre-duck level.
+/// </summary>
+public sealed class DuckEngine
+{
+    private const int TickMs = 25;
+
+    private readonly Func<AppSettings> _getSettings;
+    private readonly VolumeController _volume;
+    private readonly Action<string> _log;
+    private readonly DispatcherTimer _rampTimer;
+    private readonly DispatcherTimer _holdTimer;
+
+    private DuckState _state = DuckState.Normal;
+    private float _rampFrom;
+    private float _rampTo;
+    private DateTime _rampStart;
+    private int _rampDurationMs;
+
+    private float _normalVolume = 1f;
+    private float _currentVolume = 1f;
+    private bool _normalCaptured;
+    private bool _releaseQueued; // trigger vanished mid-attack: hold once the ramp lands
+    private string _appliedSignature = string.Empty; // target sessions we last applied volume to
+
+    private enum TestPhase { None, Attack, Hold, Release }
+    private TestPhase _test = TestPhase.None;
+
+    public DuckState State => _state;
+    public string Reason { get; private set; } = string.Empty;
+    public float CurrentVolume => _currentVolume;
+
+    public event Action? Changed;
+
+    public DuckEngine(Func<AppSettings> getSettings, VolumeController volume,
+        Dispatcher dispatcher, Action<string> log)
+    {
+        _getSettings = getSettings;
+        _volume = volume;
+        _log = log;
+        _rampTimer = new DispatcherTimer(DispatcherPriority.Normal, dispatcher)
+        {
+            Interval = TimeSpan.FromMilliseconds(TickMs)
+        };
+        _rampTimer.Tick += OnRampTick;
+        _holdTimer = new DispatcherTimer(DispatcherPriority.Normal, dispatcher);
+        _holdTimer.Tick += OnHoldElapsed;
+    }
+
+    /// <summary>
+    /// Re-evaluate after any session change.
+    /// targetSignature identifies the current target sessions (ids joined);
+    /// when it changes mid-duck we (re-)apply the ducked volume so a target
+    /// that (re-)launches while a trigger is active gets ducked immediately.
+    /// </summary>
+    public void Refresh(List<string> activeTriggers, string targetSignature)
+    {
+        if (_test != TestPhase.None) return;
+        var settings = _getSettings();
+
+        if (!settings.Enabled)
+        {
+            if (_state is DuckState.Ducking or DuckState.Ducked or DuckState.Holding or DuckState.Releasing)
+                RestoreNow("Disabled — restoring target volume.");
+            SetState(DuckState.Disabled, string.Empty);
+            return;
+        }
+        if (_state == DuckState.Disabled)
+            SetState(DuckState.Normal, string.Empty);
+
+        bool shouldDuck = activeTriggers.Count > 0;
+        string reason = shouldDuck ? $"{string.Join(", ", activeTriggers)} is ACTIVE" : string.Empty;
+
+        if (shouldDuck)
+        {
+            _holdTimer.Stop();
+            _releaseQueued = false;
+            switch (_state)
+            {
+                case DuckState.Normal:
+                    BeginDuck(reason);
+                    break;
+                case DuckState.Holding:
+                    SetState(DuckState.Ducked, reason);
+                    _log("Trigger returned during hold — staying ducked.");
+                    break;
+                case DuckState.Releasing:
+                    // Reverse direction mid-release: glide back down to ducked.
+                    StartRamp(_currentVolume, DuckedVolume(), _getSettings().AttackMilliseconds);
+                    SetState(DuckState.Ducking, reason);
+                    break;
+                case DuckState.Ducked when !_normalCaptured:
+                    // Target appeared while ducked (was missing at duck start).
+                    BeginDuck(reason);
+                    break;
+                default:
+                    Reason = reason; // stay ducked/ducking, keep reason fresh
+                    break;
+            }
+            // New target session(s) while ducked: assert the ducked volume on them.
+            if ((_state is DuckState.Ducking or DuckState.Ducked) && _normalCaptured
+                && targetSignature != _appliedSignature)
+            {
+                _volume.SetTargetVolume(settings.TargetProcessName, _currentVolume);
+                _appliedSignature = targetSignature;
+            }
+        }
+        else if (_state == DuckState.Ducked)
+        {
+            SetState(DuckState.Holding, "all triggers inactive — holding");
+            _holdTimer.Interval = TimeSpan.FromMilliseconds(Math.Max(1, settings.HoldMilliseconds));
+            _holdTimer.Start();
+            _log($"Hold started: {settings.HoldMilliseconds} ms");
+        }
+        else if (_state == DuckState.Ducking)
+        {
+            _releaseQueued = true; // finish the attack, then hold + release
+        }
+    }
+
+    /// <summary>
+    /// Verifies the volume path without needing a real trigger:
+    /// normal → duck → brief hold → restore.
+    /// </summary>
+    public void TestDuck()
+    {
+        var settings = _getSettings();
+        if (_test != TestPhase.None) return;
+        if (_state is not DuckState.Normal)
+        {
+            _log("Test Duck skipped — a duck cycle is already active.");
+            return;
+        }
+        float? actual = _volume.GetTargetVolume(settings.TargetProcessName);
+        if (actual is null)
+        {
+            _log($"Test Duck: target '{settings.TargetProcessName}' has no audio session.");
+            return;
+        }
+        _test = TestPhase.Attack;
+        _normalVolume = actual.Value;
+        _normalCaptured = true;
+        _currentVolume = actual.Value;
+        _appliedSignature = string.Empty; // force re-assert, not needed but harmless
+        _log($"Test Duck: {actual:0.00} -> ducking");
+        StartRamp(actual.Value, DuckedVolume(), settings.AttackMilliseconds);
+        SetState(DuckState.Ducking, "manual test");
+    }
+
+    private void BeginDuck(string reason)
+    {
+        var settings = _getSettings();
+        float? actual = _volume.GetTargetVolume(settings.TargetProcessName);
+        if (actual is null)
+        {
+            // Target not running (yet): stay logically ducked so a target
+            // appearing mid-duck gets ducked on the next refresh.
+            _normalCaptured = false;
+            SetState(DuckState.Ducked, reason + " (target not found)");
+            _log("Trigger active but target has no session — waiting for target.");
+            return;
+        }
+        _normalVolume = actual.Value;
+        _normalCaptured = true;
+        _currentVolume = actual.Value;
+        StartRamp(actual.Value, DuckedVolume(), settings.AttackMilliseconds);
+        SetState(DuckState.Ducking, reason);
+        _log($"{settings.TargetProcessName} volume: {actual:0.00} -> {DuckedVolume():0.00}");
+    }
+
+    private float DuckedVolume()
+    {
+        var settings = _getSettings();
+        return _normalVolume * (float)settings.DuckFactor;
+    }
+
+    private void StartRamp(float from, float to, int durationMs)
+    {
+        _rampFrom = from;
+        _rampTo = to;
+        _rampDurationMs = Math.Max(0, durationMs);
+        _rampStart = DateTime.UtcNow;
+        if (_rampDurationMs == 0)
+        {
+            _currentVolume = to;
+            ApplyCurrent();
+            OnRampFinished();
+        }
+        else
+        {
+            _currentVolume = from;
+            _rampTimer.Start();
+        }
+    }
+
+    private void OnRampTick(object? sender, EventArgs e)
+    {
+        double elapsed = (DateTime.UtcNow - _rampStart).TotalMilliseconds;
+        double t = _rampDurationMs <= 0 ? 1 : Math.Min(1, elapsed / _rampDurationMs);
+        _currentVolume = (float)(_rampFrom + (_rampTo - _rampFrom) * t);
+        ApplyCurrent();
+        Changed?.Invoke(); // live volume readout during ramps
+        if (t >= 1)
+        {
+            _rampTimer.Stop();
+            OnRampFinished();
+        }
+    }
+
+    private void ApplyCurrent()
+    {
+        var settings = _getSettings();
+        _volume.SetTargetVolume(settings.TargetProcessName, _currentVolume);
+    }
+
+    private void OnRampFinished()
+    {
+        if (_state == DuckState.Ducking)
+        {
+            SetState(DuckState.Ducked, Reason);
+            if (_test == TestPhase.Attack)
+            {
+                _test = TestPhase.Hold;
+                _holdTimer.Interval = TimeSpan.FromMilliseconds(400);
+                _holdTimer.Start();
+            }
+            else if (_releaseQueued)
+            {
+                _releaseQueued = false;
+                // Attack finished but the trigger already vanished: go to hold.
+                var settings = _getSettings();
+                SetState(DuckState.Holding, "all triggers inactive — holding");
+                _holdTimer.Interval = TimeSpan.FromMilliseconds(Math.Max(1, settings.HoldMilliseconds));
+                _holdTimer.Start();
+            }
+        }
+        else if (_state == DuckState.Releasing)
+        {
+            SetState(DuckState.Normal, string.Empty);
+            _normalCaptured = false;
+            _appliedSignature = string.Empty;
+            if (_test == TestPhase.Release)
+            {
+                _test = TestPhase.None;
+                _log("Test Duck complete — restored.");
+            }
+            else
+            {
+                _log("Restored.");
+            }
+        }
+    }
+
+    private void OnHoldElapsed(object? sender, EventArgs e)
+    {
+        _holdTimer.Stop();
+        var settings = _getSettings();
+        if (_test == TestPhase.Hold)
+        {
+            _test = TestPhase.Release;
+            _log("Test Duck: restoring");
+            StartRamp(_currentVolume, _normalVolume, settings.ReleaseMilliseconds);
+            SetState(DuckState.Releasing, "manual test");
+            return;
+        }
+        if (!_normalCaptured)
+        {
+            // Target was missing the whole duck: nothing to restore.
+            SetState(DuckState.Normal, string.Empty);
+            return;
+        }
+        _log($"Hold completed — restoring {_currentVolume:0.00} -> {_normalVolume:0.00}");
+        StartRamp(_currentVolume, _normalVolume, settings.ReleaseMilliseconds);
+        SetState(DuckState.Releasing, Reason);
+    }
+
+    private void RestoreNow(string why)
+    {
+        var settings = _getSettings();
+        _rampTimer.Stop();
+        _holdTimer.Stop();
+        _releaseQueued = false;
+        _test = TestPhase.None;
+        if (_normalCaptured)
+        {
+            _volume.SetTargetVolume(settings.TargetProcessName, _normalVolume);
+            _currentVolume = _normalVolume;
+            _normalCaptured = false;
+            _appliedSignature = string.Empty;
+            _log(why);
+        }
+        SetState(DuckState.Normal, string.Empty);
+    }
+
+    private void SetState(DuckState state, string reason)
+    {
+        _state = state;
+        Reason = reason;
+        Changed?.Invoke();
+    }
+}
