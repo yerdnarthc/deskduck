@@ -236,28 +236,41 @@ public sealed class SessionMonitor : IDisposable
 
     private void TearDownAudioObjects()
     {
-        if (_manager is not null)
+        // Shutdown-time COM calls can fail (device gone, apartment tearing
+        // down). Teardown must never throw — a dead session ends up here too.
+        try
         {
-            if (_sessionCreatedHandler is not null)
-                _manager.OnSessionCreated -= _sessionCreatedHandler;
-            _manager = null;
+            if (_manager is not null)
+            {
+                if (_sessionCreatedHandler is not null)
+                    _manager.OnSessionCreated -= _sessionCreatedHandler;
+                _manager = null;
+            }
         }
+        catch { }
         lock (_gate)
         {
-            foreach (var t in _sessions.Values) t.Dispose();
+            foreach (var t in _sessions.Values)
+            {
+                try { t.Dispose(); } catch { }
+            }
             _sessions.Clear();
         }
-        _device?.Dispose();
+        try { _device?.Dispose(); } catch { }
         _device = null;
-        if (_deviceNotifications is not null)
+        try
         {
-            _deviceNotifications.DefaultDeviceChanged -= OnDefaultDeviceChanged;
-            _deviceNotifications.Dispose();
-            _deviceNotifications = null;
+            if (_deviceNotifications is not null)
+            {
+                _deviceNotifications.DefaultDeviceChanged -= OnDefaultDeviceChanged;
+                _deviceNotifications.Dispose();
+                _deviceNotifications = null;
+            }
         }
+        catch { _deviceNotifications = null; }
         // NOTE: keep _enumerator alive across re-inits would also be fine,
         // but recreating keeps lifetimes obvious.
-        _enumerator?.Dispose();
+        try { _enumerator?.Dispose(); } catch { }
         _enumerator = null;
     }
 
