@@ -17,7 +17,7 @@
                       Text="{Binding TargetProcessName, UpdateSourceTrigger=LostFocus}"
                       ToolTip="Process name of the music app, e.g. Spotify"/>
 
-            <Label Content="Trigger applications (duck while ACTIVE)"/>
+            <Label Content="Trigger applications"/>
             <ListBox ItemsSource="{Binding TriggerOptions}" MaxHeight="120" BorderThickness="1">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
@@ -25,6 +25,20 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
+
+            <GroupBox Header="Trigger mode" Margin="0,8,0,0">
+                <StackPanel>
+                    <RadioButton Content="Session activity (duck while a trigger is ACTIVE, any loudness)"
+                                 IsChecked="{Binding IsActivityMode}" Margin="0,2"/>
+                    <RadioButton Content="Audio level (duck while a trigger is louder than…)"
+                                 IsChecked="{Binding IsLevelMode}" Margin="0,2"/>
+                    <Label Target="{Binding ElementName=ThresholdSlider}" Content="{Binding ThresholdText, StringFormat='Threshold: {0}'}"/>
+                    <Slider x:Name="ThresholdSlider" Minimum="-60" Maximum="0" TickFrequency="3" IsSnapToTickEnabled="True"
+                            Value="{Binding ThresholdDb, UpdateSourceTrigger=PropertyChanged}"
+                            IsEnabled="{Binding IsLevelMode}"
+                            ToolTip="Peak level that engages ducking; releases 3 dB below this"/>
+                </StackPanel>
+            </GroupBox>
 
             <Label Target="{Binding ElementName=DuckSlider}" Content="{Binding DuckFactorText, StringFormat='Duck to {0} of normal volume'}"/>
             <Slider x:Name="DuckSlider" Minimum="5" Maximum="100" TickFrequency="5" IsSnapToTickEnabled="True"
@@ -87,9 +101,10 @@
             <ListView ItemsSource="{Binding Sessions}" Height="150">
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn Header="Application" Width="150" DisplayMemberBinding="{Binding ProcessName}"/>
+                        <GridViewColumn Header="Application" Width="130" DisplayMemberBinding="{Binding ProcessName}"/>
                         <GridViewColumn Header="PID" Width="55" DisplayMemberBinding="{Binding ProcessId}"/>
-                        <GridViewColumn Header="State" Width="70" DisplayMemberBinding="{Binding State}"/>
+                        <GridViewColumn Header="State" Width="65" DisplayMemberBinding="{Binding State}"/>
+                        <GridViewColumn Header="Level" Width="60" DisplayMemberBinding="{Binding LevelText}"/>
                         <GridViewColumn Header="Role" Width="70" DisplayMemberBinding="{Binding Role}"/>
                     </GridView>
                 </ListView.View>

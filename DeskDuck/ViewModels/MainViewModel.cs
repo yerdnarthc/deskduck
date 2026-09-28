@@ -53,7 +53,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         _monitor.Start();
         OnSessionsChanged(); // initial paint
         Log($"Settings: {Settings.TargetProcessName} | duck {Settings.DuckFactor:0%} | " +
-            $"A{Settings.AttackMilliseconds}/H{Settings.HoldMilliseconds}/R{Settings.ReleaseMilliseconds}ms");
+            $"A{Settings.AttackMilliseconds}/H{Settings.HoldMilliseconds}/R{Settings.ReleaseMilliseconds}ms | " +
+            $"mode {Settings.TriggerMode} ({Settings.ThresholdDb:0} dB)");
     }
 
     // ---- bindable settings (validated, auto-saved) ----
@@ -138,6 +139,46 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             OnPropertyChanged();
         }
     }
+
+    // ---- trigger mode + threshold ----
+
+    public bool IsActivityMode
+    {
+        get => !string.Equals(Settings.TriggerMode, "Level", StringComparison.OrdinalIgnoreCase);
+        set
+        {
+            if (value == IsActivityMode) return;
+            Settings.TriggerMode = value ? "Activity" : "Level";
+            SaveAndRefresh();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsLevelMode));
+            Log($"Trigger mode: {Settings.TriggerMode}" +
+                (IsLevelMode ? $" (threshold {Settings.ThresholdDb:0} dB)" : " (session ACTIVE state)"));
+        }
+    }
+
+    public bool IsLevelMode
+    {
+        get => !IsActivityMode;
+        set => IsActivityMode = !value;
+    }
+
+    /// <summary>Threshold in dBFS, -60 (anything audible) to 0 (only full-scale).</summary>
+    public int ThresholdDb
+    {
+        get => (int)Math.Round(Settings.ThresholdDb);
+        set
+        {
+            value = Math.Clamp(value, -60, 0);
+            if (ThresholdDb == value) return;
+            Settings.ThresholdDb = value;
+            SaveAndRefresh();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ThresholdText));
+        }
+    }
+
+    public string ThresholdText => $"{ThresholdDb} dB";
 
     // ---- status ----
 
