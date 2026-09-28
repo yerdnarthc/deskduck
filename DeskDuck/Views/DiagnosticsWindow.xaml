@@ -12,7 +12,8 @@
     <DockPanel Margin="12">
         <TextBlock DockPanel.Dock="Top" Style="{StaticResource MutedText}" Margin="0,0,0,8"
                    Text="Live Windows audio sessions. Orange rows are currently ducking the target."/>
-        <ListView ItemsSource="{Binding Sessions}">
+        <ListView ItemsSource="{Binding Sessions}"
+                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
             <ListView.ItemContainerStyle>
                 <!-- GridView rows MUST host a GridViewRowPresenter (not a plain
                      ContentPresenter) or columns collapse into ToString(). -->
