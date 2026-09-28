@@ -4,7 +4,11 @@
         Title="Log" Height="320" Width="540"
         MinHeight="220" MinWidth="400"
         Icon="../Assets/Icons/DeskDuck Logo (Transparent).png"
-        ShowInTaskbar="False" WindowStartupLocation="CenterOwner">
+        ShowInTaskbar="False" WindowStartupLocation="CenterOwner"
+        Background="{StaticResource AppBackgroundBrush}"
+        Foreground="{StaticResource TextBrush}"
+        FontFamily="{StaticResource AppFontFamily}"
+        FontSize="13">
     <DockPanel Margin="12">
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0">
             <CheckBox x:Name="AutoScrollBox" Content="Auto-scroll" IsChecked="True"

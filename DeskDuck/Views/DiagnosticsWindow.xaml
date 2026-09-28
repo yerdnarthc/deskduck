@@ -4,7 +4,11 @@
         Title="Audio sessions" Height="340" Width="520"
         MinHeight="240" MinWidth="400"
         Icon="../Assets/Icons/DeskDuck Logo (Transparent).png"
-        ShowInTaskbar="False" WindowStartupLocation="CenterOwner">
+        ShowInTaskbar="False" WindowStartupLocation="CenterOwner"
+        Background="{StaticResource AppBackgroundBrush}"
+        Foreground="{StaticResource TextBrush}"
+        FontFamily="{StaticResource AppFontFamily}"
+        FontSize="13">
     <DockPanel Margin="12">
         <TextBlock DockPanel.Dock="Top" Style="{StaticResource MutedText}" Margin="0,0,0,8"
                    Text="Live Windows audio sessions. Orange rows are currently ducking the target."/>

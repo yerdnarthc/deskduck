@@ -7,11 +7,15 @@
         mc:Ignorable="d"
         Title="DeskDuck" Height="640" Width="440"
         MinHeight="520" MinWidth="380"
-        Icon="Assets/Icons/DeskDuck Logo (Transparent).png">
+        Icon="Assets/Icons/DeskDuck Logo (Transparent).png"
+        Background="{StaticResource AppBackgroundBrush}"
+        Foreground="{StaticResource TextBrush}"
+        FontFamily="{StaticResource AppFontFamily}"
+        FontSize="13">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </Window.Resources>
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12" Background="Transparent">
         <StackPanel Orientation="Vertical">
             <StackPanel Orientation="Horizontal" Margin="0,0,0,8" VerticalAlignment="Center">
                 <Image Source="Assets/Icons/DeskDuck Logo (Transparent).png" Width="38" Height="38"

@@ -39,16 +39,12 @@
     </Style>
 
     <!-- ============ Base ============ -->
-
-    <Style TargetType="Window">
-        <Setter Property="Background" Value="{StaticResource AppBackgroundBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-        <!-- Bundled brand font (Resource build action), Segoe UI fallback.
-             Space Mono ships Regular/Bold only — always use Bold, never
-             SemiBold (WPF would pick an unpredictable synthetic weight). -->
-        <Setter Property="FontFamily" Value="/Assets/Fonts/#Space Mono, Segoe UI"/>
-        <Setter Property="FontSize" Value="13"/>
-    </Style>
+    <!-- NOTE: no implicit Window style. It demonstrably does not apply to  -->
+    <!-- the root window in this app (probed: Background stayed #FFFFFFFF), -->
+    <!-- so windows set Background/FontFamily/FontSize explicitly instead.  -->
+    <!-- The brand font itself is resolved in code (App.ResolveAppFont) and -->
+    <!-- exposed as AppFontFamily, because #fragment string-URI references   -->
+    <!-- provably fail glyph binding here while folder enumeration succeeds. -->
 
     <Style TargetType="Label">
         <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
