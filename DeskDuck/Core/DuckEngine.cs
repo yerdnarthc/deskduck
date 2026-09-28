@@ -381,13 +381,11 @@ public sealed class DuckEngine
         }
         _normalVolume = actual.Value;
         _normalCaptured = true;
+        _pendingRestore = false;
         _currentVolume = actual.Value;
-        if (_pendingRestore)
-        {
-            // Fresh capture supersedes any retained one.
-            _pendingRestore = false;
-            SyncPersistedCapture();
-        }
+        // Unconditional: a fresh capture must hit disk even with no prior
+        // pending state, or a kill/crash mid-duck leaves nothing to seed from.
+        SyncPersistedCapture();
         StartRamp(actual.Value, DuckedVolume(), settings.AttackMilliseconds);
         SetState(DuckState.Ducking, reason);
         _log($"{settings.TargetProcessName} volume: {actual:0.00} -> {DuckedVolume():0.00}");
