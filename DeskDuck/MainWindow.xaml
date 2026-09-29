@@ -144,8 +144,9 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
                     </ListBox>
+                    <Label Content="Ducking Mode" Margin="0,8,0,0"/>
                     <RadioButton Content="Session activity (any loudness)"
-                                 IsChecked="{Binding IsActivityMode}" Margin="0,14,0,2"
+                                 IsChecked="{Binding IsActivityMode}" Margin="0,2,0,2"
                                  ToolTip="Duck while a trigger's audio session is ACTIVE"/>
                     <RadioButton Content="Audio level (louder than…)"
                                  IsChecked="{Binding IsLevelMode}" Margin="0,10"
