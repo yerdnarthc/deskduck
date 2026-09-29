@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:DeskDuck.Controls"
         mc:Ignorable="d"
-        Title="DeskDuck" Height="1060" Width="550"
+        Title="DeskDuck" Height="1050" Width="550"
         MinHeight="560" MinWidth="380"
         Icon="Assets/Icons/DeskDuck Logo (Transparent).png"
         Background="{StaticResource AppBackgroundBrush}"
@@ -121,7 +121,7 @@
 
             <GroupBox Header="WHEN TO DUCK">
                 <StackPanel>
-                    <ListBox ItemsSource="{Binding TriggerOptions}" MaxHeight="130" BorderThickness="1"
+                    <ListBox ItemsSource="{Binding TriggerOptions}" MinHeight="127" MaxHeight="127" BorderThickness="1"
                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
