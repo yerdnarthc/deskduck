@@ -29,6 +29,16 @@ public sealed class AppSettings
     /// <summary>Peak level (dBFS) a trigger must reach to duck. -60 to 0.</summary>
     public double ThresholdDb { get; set; } = -30;
 
+    /// <summary>
+    /// Pre-duck target volume DeskDuck never got to restore (target vanished
+    /// or the app exited mid-duck). Null = nothing pending. Reconciled
+    /// automatically when the target returns; never shown in the UI.
+    /// </summary>
+    public float? PendingRestoreVolume { get; set; }
+
+    /// <summary>Target process the pending volume belongs to (stale if renamed).</summary>
+    public string PendingRestoreTarget { get; set; } = string.Empty;
+
     public void Normalize()
     {
         TargetProcessName = ProcessNames.Normalize(TargetProcessName);
@@ -49,5 +59,16 @@ public sealed class AppSettings
         if (!string.Equals(TriggerMode, "Level", StringComparison.OrdinalIgnoreCase))
             TriggerMode = "Activity";
         ThresholdDb = Math.Clamp(ThresholdDb, -60, 0);
+
+        if (!PendingRestoreVolume.HasValue
+            || float.IsNaN(PendingRestoreVolume.Value)
+            || PendingRestoreVolume.Value < 0
+            || PendingRestoreVolume.Value > 1)
+        {
+            PendingRestoreVolume = null;
+        }
+        PendingRestoreTarget = PendingRestoreVolume.HasValue
+            ? ProcessNames.Normalize(PendingRestoreTarget)
+            : string.Empty;
     }
 }
