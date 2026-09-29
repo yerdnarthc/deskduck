@@ -104,9 +104,9 @@
                                 <Image.Style>
                                     <Style TargetType="Image">
                                         <Style.Triggers>
-                                            <Trigger Property="Source" Value="{x:Null}">
+                                            <DataTrigger Binding="{Binding Icon}" Value="{x:Null}">
                                                 <Setter Property="Visibility" Value="Collapsed"/>
-                                            </Trigger>
+                                            </DataTrigger>
                                         </Style.Triggers>
                                     </Style>
                                 </Image.Style>
@@ -131,9 +131,9 @@
                                     <Image.Style>
                                         <Style TargetType="Image">
                                             <Style.Triggers>
-                                                <Trigger Property="Source" Value="{x:Null}">
+                                                <DataTrigger Binding="{Binding Icon}" Value="{x:Null}">
                                                     <Setter Property="Visibility" Value="Collapsed"/>
-                                                </Trigger>
+                                                </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Image.Style>
