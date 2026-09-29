@@ -111,6 +111,7 @@ public partial class Knob : System.Windows.Controls.UserControl
         base.OnMouseLeftButtonDown(e);
         Focus();
         _dragging = true;
+        Dial.IsDragging = true;
         _dragStartY = e.GetPosition(this).Y;
         _dragStartValue = Value;
         CaptureMouse();
@@ -133,7 +134,15 @@ public partial class Knob : System.Windows.Controls.UserControl
     {
         base.OnMouseLeftButtonUp(e);
         _dragging = false;
+        Dial.IsDragging = false;
         ReleaseMouseCapture();
+    }
+
+    protected override void OnLostMouseCapture(MouseEventArgs e)
+    {
+        base.OnLostMouseCapture(e);
+        _dragging = false;
+        Dial.IsDragging = false;
     }
 
     protected override void OnMouseWheel(MouseWheelEventArgs e)
@@ -194,9 +203,14 @@ public sealed class DialDisplay : FrameworkElement
         DependencyProperty.Register(nameof(Value), typeof(double), typeof(DialDisplay),
             new FrameworkPropertyMetadata(0.0, FrameworkPropertyMetadataOptions.AffectsRender));
 
+    public static readonly DependencyProperty IsDraggingProperty =
+        DependencyProperty.Register(nameof(IsDragging), typeof(bool), typeof(DialDisplay),
+            new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
+
     public double Minimum { get => (double)GetValue(MinimumProperty); set => SetValue(MinimumProperty, value); }
     public double Maximum { get => (double)GetValue(MaximumProperty); set => SetValue(MaximumProperty, value); }
     public double Value { get => (double)GetValue(ValueProperty); set => SetValue(ValueProperty, value); }
+    public bool IsDragging { get => (bool)GetValue(IsDraggingProperty); set => SetValue(IsDraggingProperty, value); }
 
     private const double MinAngle = -135;
     private const double MaxAngle = 135;
@@ -231,10 +245,11 @@ public sealed class DialDisplay : FrameworkElement
             dc.DrawLine(new Pen(tickBrush, major ? 1.6 : 1.0), inner, outer);
         }
 
-        // Track (full 270° sweep) + filled value arc.
+        // Track (full 270° sweep) + filled value arc (thicker while dragging).
+        double arcWidth = IsDragging ? 8.5 : 6;
         DrawArc(dc, center, radius, MinAngle, MaxAngle, trackBrush, 6);
         if (fraction > 0.001)
-            DrawArc(dc, center, radius, MinAngle, currentAngle, accentBrush, 6);
+            DrawArc(dc, center, radius, MinAngle, currentAngle, accentBrush, arcWidth);
 
         // Needle + center cap.
         var tip = PointAt(center, radius - 9, currentAngle);

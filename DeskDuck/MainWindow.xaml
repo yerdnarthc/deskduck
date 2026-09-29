@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:DeskDuck.Controls"
         mc:Ignorable="d"
-        Title="DeskDuck" Height="1050" Width="550"
+        Title="DeskDuck" Height="1060" Width="550"
         MinHeight="560" MinWidth="380"
         WindowStartupLocation="CenterScreen"
         Icon="Assets/Icons/DeskDuck Logo (Transparent).png"
@@ -76,8 +76,9 @@
                             <TextBlock Text="{Binding StatusText}" FontWeight="Bold" FontSize="20" VerticalAlignment="Center"/>
                         </StackPanel>
                         <!-- Primary toggle: top-right of the hero, impossible to miss. -->
+                        <!-- The toggle is the primary control: labeled Bold, top row. -->
                         <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="Enabled" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <TextBlock Text="Enabled" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,8,0"/>
                             <CheckBox IsChecked="{Binding Enabled}" Style="{StaticResource PowerToggle}"
                                       AutomationProperties.Name="Enable automatic ducking"
                                       ToolTip="Master switch — when off, DeskDuck never changes the target volume"/>
@@ -86,7 +87,7 @@
                     <TextBlock Text="{Binding Reason}" Style="{StaticResource MutedText}" Margin="0,2,0,0"/>
                     <TextBlock Text="{Binding TargetVolumeText}" Style="{StaticResource MutedText}"/>
                     <Button Content="Test Duck" Command="{Binding TestDuckCommand}" Style="{StaticResource PrimaryButton}"
-                            HorizontalAlignment="Stretch" Margin="0,12,0,0"/>
+                            HorizontalAlignment="Right" Margin="0,12,0,0"/>
                 </StackPanel>
             </Border>
 
