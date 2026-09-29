@@ -1,3 +1,5 @@
 <Solution>
-  <Project Path="DeskDuck/DeskDuck.csproj" />
+  <Project Path="DeskDuck/DeskDuck.csproj">
+    <BuildType Project="Release" />
+  </Project>
 </Solution>
