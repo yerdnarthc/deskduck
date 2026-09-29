@@ -191,6 +191,18 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public int SessionsCount => Sessions.Count;
     public int LogCount => LogLines.Count;
 
+    /// <summary>
+    /// App version stamp (bottom-right). Supplied via the csproj Version —
+    /// bump it there to change what shows here. Falls back to v0.0.0.
+    /// </summary>
+    public string AppVersionText { get; } = ReadAppVersion();
+
+    private static string ReadAppVersion()
+    {
+        var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+        return version is null ? "v0.0.0" : $"v{version.Major}.{version.Minor}.{version.Build}";
+    }
+
     // Preformatted here (not via Binding.StringFormat in XAML): StringFormat
     // is silently ignored when the target property isn't a string, and
     // Button.Content is object — which is exactly how the buttons ended up
