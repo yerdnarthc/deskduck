@@ -1,11 +1,12 @@
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Windows.Threading;
 using DeskDuck.Audio;
 using DeskDuck.Core;
 using DeskDuck.Models;
 using DeskDuck.Services;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Windows.Threading;
 
 namespace DeskDuck.ViewModels;
 
@@ -192,15 +193,26 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public int LogCount => LogLines.Count;
 
     /// <summary>
-    /// App version stamp (bottom-right). Supplied via the csproj Version —
-    /// bump it there to change what shows here. Falls back to v0.0.0.
+    /// App version shown in the UI, sourced from the project's informational version.
     /// </summary>
     public string AppVersionText { get; } = ReadAppVersion();
 
     private static string ReadAppVersion()
     {
-        var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-        return version is null ? "v0.0.0" : $"v{version.Major}.{version.Minor}.{version.Build}";
+        var version = System.Reflection.Assembly
+            .GetExecutingAssembly()
+            .GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion;
+
+        if (string.IsNullOrWhiteSpace(version))
+            return "v0.0.0";
+
+        // Strip the automatically appended Git/source revision suffix if present.
+        var plusIndex = version.IndexOf('+');
+        if (plusIndex >= 0)
+            version = version[..plusIndex];
+
+        return $"v{version}";
     }
 
     // Preformatted here (not via Binding.StringFormat in XAML): StringFormat
