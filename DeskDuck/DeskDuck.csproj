@@ -3,13 +3,21 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
-	  <Version>1.0.0-beta</Version>
+	<Version>1.0.0-beta</Version>
+	  
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <!-- WinForms is referenced for NotifyIcon only (system tray); the UI stays 100% WPF. -->
     <UseWindowsForms>true</UseWindowsForms>
+	  
     <ApplicationIcon>Assets\Icons\app.ico</ApplicationIcon>
+
+	<PublishSingleFile>true</PublishSingleFile>
+	<SelfContained>true</SelfContained>
+	<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+	<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+	
   </PropertyGroup>
 
   <ItemGroup>
