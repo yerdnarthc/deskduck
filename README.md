@@ -18,7 +18,7 @@
 ## Contents
 
 - [See It In Action (Demo)](#see-it-in-action)
-- [Take A Look Around (Screenshots)](#take-a-look-around)
+- [Take A Look Around (Screenshots/GIFs)](#take-a-look-around)
 - [Why DeskDuck?](#why-deskduck)
 - [How It Works](#how-it-works)
 - [What You Can Control](#what-you-can-control)
@@ -59,6 +59,12 @@ See section: [Sessions Window](#sessions-window)
 ![DeskDuck Event Log Window](docs/screenshots/deskduck_log_window.png)
 
 See section: [Log Window](#log-window)
+
+### DeskDuck System Tray
+
+![DeskDuck System Tray](docs/demo/deskduck_system_tray.gif)
+
+See section: [System Tray](#system-tray)
 
 ## Why DeskDuck?
 
@@ -123,7 +129,7 @@ See which applications Windows currently recognizes as producing audio and which
 ### Log
 Review what DeskDuck detected and when it changed the music volume.
 
-### System tray
+### The system tray
 Close the main window without stopping DeskDuck. It can continue working quietly in the background until you exit it from the tray.
 
 ## A Typical Setup
