@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows.Media;
 
 namespace DeskDuck.Models;
 
@@ -34,6 +35,23 @@ public sealed class DiscoveredApp : INotifyPropertyChanged
         {
             if (_hasActiveSession == value) return;
             _hasActiveSession = value;
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>Exe path behind this app (for icon lookup). May be empty.</summary>
+    public string ExecutablePath { get; set; } = string.Empty;
+
+    private ImageSource? _icon;
+
+    /// <summary>App icon, resolved by the ViewModel. Null = text only.</summary>
+    public ImageSource? Icon
+    {
+        get => _icon;
+        set
+        {
+            if (_icon == value) return;
+            _icon = value;
             OnPropertyChanged();
         }
     }

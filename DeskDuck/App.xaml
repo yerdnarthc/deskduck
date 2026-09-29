@@ -3,6 +3,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
               xmlns:local="clr-namespace:DeskDuck">
     <Application.Resources>
-         
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <!-- Design-time placeholder: replaced with bundled Space Mono at
+                 startup (App.ResolveAppFont). Exists so the VS designer and
+                 any window loaded without App startup can resolve the key. -->
+            <FontFamily x:Key="AppFontFamily">Segoe UI</FontFamily>
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -1,11 +1,12 @@
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Windows.Threading;
 using DeskDuck.Audio;
 using DeskDuck.Core;
 using DeskDuck.Models;
 using DeskDuck.Services;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Windows.Threading;
 
 namespace DeskDuck.ViewModels;
 
@@ -44,6 +45,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             OnPropertyChanged(nameof(StatusText));
             OnPropertyChanged(nameof(Reason));
             OnPropertyChanged(nameof(TargetVolumeText));
+            UpdateCausingDuck();
         };
         _monitor.SessionsChanged += OnSessionsChanged;
         _monitor.MetersChanged += OnMetersChanged;
@@ -187,6 +189,54 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
     public string DeviceName => _monitor.DeviceName;
     public string TargetVolumeText => $"Target volume: {_engine.CurrentVolume:0%}";
 
+    public int SessionsCount => Sessions.Count;
+    public int LogCount => LogLines.Count;
+
+    /// <summary>
+    /// App version shown in the UI, sourced from the project's informational version.
+    /// </summary>
+    public string AppVersionText { get; } = ReadAppVersion();
+
+    private static string ReadAppVersion()
+    {
+        var version = System.Reflection.Assembly
+            .GetExecutingAssembly()
+            .GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion;
+
+        if (string.IsNullOrWhiteSpace(version))
+            return "v0.0.0";
+
+        // Strip the automatically appended Git/source revision suffix if present.
+        var plusIndex = version.IndexOf('+');
+        if (plusIndex >= 0)
+            version = version[..plusIndex];
+
+        return $"v{version}";
+    }
+
+    // Preformatted here (not via Binding.StringFormat in XAML): StringFormat
+    // is silently ignored when the target property isn't a string, and
+    // Button.Content is object — which is exactly how the buttons ended up
+    // showing bare numbers. The underscore keeps the Alt+S / Alt+L keys.
+    public string SessionsButtonText => $"_Sessions ({SessionsCount})";
+    public string LogButtonText => $"_Log ({LogCount})";
+
+    public void ClearLog()
+    {
+        LogLines.Clear();
+        OnPropertyChanged(nameof(LogCount));
+        OnPropertyChanged(nameof(LogButtonText));
+    }
+
+    /// <summary>Flags rows currently causing the duck (highlighted in diagnostics).</summary>
+    private void UpdateCausingDuck()
+    {
+        var active = new HashSet<string>(_engine.ActiveTriggers, StringComparer.OrdinalIgnoreCase);
+        foreach (var row in Sessions)
+            row.IsCausingDuck = active.Contains(row.ProcessName);
+    }
+
     // ---- core reaction: any session/meter change re-evaluates the trigger ----
 
     private void OnSessionsChanged()
@@ -198,10 +248,20 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         foreach (var s in snapshot) Sessions.Add(s);
 
         var discovered = _monitor.GetDiscoveredApps();
+        foreach (var app in discovered)
+            app.Icon = AppIconService.GetIcon(app.ExecutablePath);
+        var iconByApp = discovered
+            .GroupBy(a => a.ProcessName, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First().Icon, StringComparer.OrdinalIgnoreCase);
+        foreach (var s in snapshot)
+            if (iconByApp.TryGetValue(s.ProcessName, out var icon))
+                s.Icon = icon;
         SyncAppsInPlace(discovered);
 
         SyncTriggerOptions(discovered);
         OnPropertyChanged(nameof(DeviceName));
+        OnPropertyChanged(nameof(SessionsCount));
+        OnPropertyChanged(nameof(SessionsButtonText));
 
         RefreshEngine();
     }
@@ -239,6 +299,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             {
                 existing.DisplayName = d.DisplayName;
                 existing.HasActiveSession = d.HasActiveSession;
+                existing.ExecutablePath = d.ExecutablePath;
+                existing.Icon = d.Icon;
             }
         }
     }
@@ -264,9 +326,26 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         var readings = _monitor.GetTriggerReadings(Settings.TargetProcessName, Settings.TriggerProcesses);
         string signature = string.Join("|", Sessions.Where(s => s.IsTarget).Select(s => s.SessionId));
         _engine.Refresh(readings, signature);
+        FlushEnginePersistence();
     }
 
-    /// <summary>Checklist = configured triggers ∪ currently discovered apps.</summary>
+    /// <summary>
+    /// Persists the engine's pending-restore capture, but only when it changed
+    /// (volume ramps never mark dirty, so the 10 Hz ticks stay IO-free).
+    /// </summary>
+    private void FlushEnginePersistence()
+    {
+        if (_disposed || !_engine.ConsumePersistenceDirty())
+            return;
+        Settings.Normalize();
+        _settingsService.Save(Settings);
+    }
+
+    /// <summary>
+    /// Checklist = configured triggers ∪ currently discovered apps, minus the
+    /// target itself. The target can never be its own trigger (the engine
+    /// ignores it), so offering it as a choice only invites confusion.
+    /// </summary>
     private void SyncTriggerOptions(List<DiscoveredApp> discovered)
     {
         var labels = discovered.ToDictionary(d => d.ProcessName, d => d.Label,
@@ -275,6 +354,7 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
             .Concat(discovered.Select(d => d.ProcessName))
             .Select(ProcessNames.Normalize)
             .Where(n => !string.IsNullOrEmpty(n))
+            .Where(n => !ProcessNames.Matches(n, Settings.TargetProcessName))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
             .ToList();
@@ -289,8 +369,9 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             if (existing.Contains(name)) continue;
             labels.TryGetValue(name, out string? label);
+            var source = discovered.FirstOrDefault(d => ProcessNames.Matches(d.ProcessName, name));
             bool selected = Settings.TriggerProcesses.Contains(name, StringComparer.OrdinalIgnoreCase);
-            TriggerOptions.Add(new TriggerEntry(name, label ?? name, selected, OnTriggerToggled));
+            TriggerOptions.Add(new TriggerEntry(name, label ?? name, selected, OnTriggerToggled, source?.Icon));
         }
     }
 
@@ -316,6 +397,8 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
         {
             LogLines.Add($"[{DateTime.Now:HH:mm:ss}] {message}");
             while (LogLines.Count > 300) LogLines.RemoveAt(0);
+            OnPropertyChanged(nameof(LogCount));
+            OnPropertyChanged(nameof(LogButtonText));
         });
     }
 
@@ -327,6 +410,11 @@ public sealed class MainViewModel : INotifyPropertyChanged, IDisposable
 
     public void Dispose()
     {
+        // A capture alive at shutdown is restored on the spot if possible,
+        // else persisted as pending for the next run. Flush saves either way.
+        // (All audio callbacks marshal to this thread, so no teardown race.)
+        _engine.RestoreForExit();
+        FlushEnginePersistence();
         _disposed = true;
         _monitor.Dispose();
         _volume.Dispose();

@@ -3,13 +3,24 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
+	  <Version>1.0.0-beta</Version>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <!-- WinForms is referenced for NotifyIcon only (system tray); the UI stays 100% WPF. -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <ApplicationIcon>Assets\Icons\app.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="NAudio" Version="3.1.0" />
+  </ItemGroup>
+
+  <!-- Bundled brand assets. Reference images (Images/) are deliberately
+       excluded — they never ship in the binary. -->
+  <ItemGroup>
+    <Resource Include="Assets\Fonts\*.ttf" />
+    <Resource Include="Assets\Icons\DeskDuck Logo (Transparent).png" />
   </ItemGroup>
 
 </Project>

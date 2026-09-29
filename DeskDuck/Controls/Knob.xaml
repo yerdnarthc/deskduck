@@ -2,13 +2,16 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:DeskDuck.Controls"
-             Focusable="True" Cursor="SizeNS" Width="110">
+             Focusable="True" Cursor="SizeNS" Width="110"
+             FocusVisualStyle="{StaticResource AppFocusVisual}">
     <StackPanel Orientation="Vertical">
         <local:DialDisplay x:Name="Dial" Width="84" Height="84"
                            Minimum="{Binding Minimum, RelativeSource={RelativeSource AncestorType=UserControl}}"
                            Maximum="{Binding Maximum, RelativeSource={RelativeSource AncestorType=UserControl}}"
                            Value="{Binding Value, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
-        <TextBlock x:Name="ValueText" HorizontalAlignment="Center" FontWeight="SemiBold" FontSize="13"/>
-        <TextBlock x:Name="CaptionText" HorizontalAlignment="Center" Foreground="Gray" FontSize="11"/>
+        <TextBlock x:Name="ValueText" HorizontalAlignment="Center" FontWeight="Bold" FontSize="13"
+                   Foreground="{StaticResource TextBrush}"/>
+        <TextBlock x:Name="CaptionText" HorizontalAlignment="Center" FontSize="11"
+                   Foreground="{StaticResource MutedBrush}"/>
     </StackPanel>
 </UserControl>

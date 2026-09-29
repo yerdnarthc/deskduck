@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows.Media;
 
 namespace DeskDuck.Models;
 
@@ -33,6 +34,34 @@ public sealed class AudioSessionInfo : INotifyPropertyChanged
     }
 
     public string LevelText => $"{_levelDb:0} dB";
+
+    private bool _isCausingDuck;
+
+    /// <summary>True while this session is one of the active duck triggers.</summary>
+    public bool IsCausingDuck
+    {
+        get => _isCausingDuck;
+        set
+        {
+            if (_isCausingDuck == value) return;
+            _isCausingDuck = value;
+            OnPropertyChanged();
+        }
+    }
+
+    private ImageSource? _icon;
+
+    /// <summary>Owning app's icon. Null = no icon cell.</summary>
+    public ImageSource? Icon
+    {
+        get => _icon;
+        set
+        {
+            if (_icon == value) return;
+            _icon = value;
+            OnPropertyChanged();
+        }
+    }
 
     public bool IsSystemSounds { get; init; }
     public bool IsTarget { get; set; }
