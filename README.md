@@ -11,7 +11,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/platform-Windows-blue" alt="Windows">
   <img src="https://img.shields.io/badge/.NET-10-purple" alt=".NET 10">
-  <img src="https://img.shields.io/badge/release-1.0.0--beta-orange" alt="v1.0.0-beta">
+  <img src="https://img.shields.io/badge/release-1.0.1--beta-orange" alt="v1.0.1-beta">
   <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License">
 </p>
 
@@ -38,13 +38,15 @@
 
 ## See It In Action
 
-https://github.com/user-attachments/assets/becdb9d4-a428-4406-b764-2e03b87d9025
+https://github.com/user-attachments/assets/becdb9d4-a428-4406-b764-2e03b87d9025 <br>
+*NOTE: The demo shown here is still in v1.0.0-beta*
 
 ## Take A Look Around
 
 ### DeskDuck Main Window
+*Updated to v1.0.1-beta*  
 
-![DeskDuck Main Window](docs/screenshots/deskduck_main_window.png)
+![DeskDuck Main Window](docs/screenshots/deskduck_main_window_v1.0.1-beta.png)
 
 See section: [How It Works](#how-it-works)
 
@@ -266,7 +268,7 @@ Starting playback in the application should normally make it appear, and newly c
 
 ## A Note About The Beta
 
-DeskDuck is currently a **v1.0.0-beta** release.
+DeskDuck is currently a **v1.0.1-beta** release.
 
 The main workflow is in place, but desktop audio behavior can vary from one application and audio driver to another. The Sessions and Log windows are included specifically to make those differences easier to understand.
 
